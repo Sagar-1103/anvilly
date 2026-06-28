@@ -7,19 +7,29 @@
     "dev": "bun run src/index.ts"
   },
   "devDependencies": {
+    "@tailwindcss/vite": "^4.3.1",
     "@types/bun": "latest",
     "@types/cors": "^2.8.19",
-    "@types/express": "^5.0.6"
+    "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "autoprefixer": "^10.5.2",
+    "postcss": "^8.5.15",
+    "tailwindcss": "^4.3.1"
   },
   "peerDependencies": {
     "typescript": "^5"
   },
   "dependencies": {
+    "@e2b/code-interpreter": "^2.6.1",
+    "@google/genai": "^2.10.0",
+    "@repo/db": "workspace:*",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
+    "e2b": "^2.31.0",
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
-    "@repo/db":"workspace:*"
+    "lucide-react": "^1.21.0",
+    "zod": "^4.4.3"
   }
 }
