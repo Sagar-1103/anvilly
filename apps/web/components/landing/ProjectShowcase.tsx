@@ -21,7 +21,7 @@ const tabs = ["All Projects", "My Projects", "Shared Projects"] as const;
 const projects: Project[] = [
   {
     id: "1",
-    title: "MetricsPulse — Analytics Hub",
+    title: "MetricsPulse - Analytics Hub",
     description: "Real-time SaaS telemetry dashboard with interactive charts, user funnel breakdown, and custom alerts.",
     type: "My Projects",
     author: { name: "You", avatar: "Y" },
@@ -31,7 +31,7 @@ const projects: Project[] = [
   },
   {
     id: "2",
-    title: "CognitiveFlow — AI Writer",
+    title: "CognitiveFlow - AI Writer",
     description: "Minimalist workspace for AI content generation with streaming output, prompt templates, and PDF export.",
     type: "My Projects",
     author: { name: "You", avatar: "Y" },
@@ -41,7 +41,7 @@ const projects: Project[] = [
   },
   {
     id: "3",
-    title: "AuraStore — Headless Shop",
+    title: "AuraStore - Headless Shop",
     description: "Ultra-fast modern ecommerce storefront featuring slick motion transitions, cart side-sheet, and Stripe checkout.",
     type: "Shared Projects",
     author: { name: "sarah_m", avatar: "S" },
@@ -51,7 +51,7 @@ const projects: Project[] = [
   },
   {
     id: "4",
-    title: "TaskForge — Kanban Studio",
+    title: "TaskForge - Kanban Studio",
     description: "Collaborative project management tool with drag-and-drop boards, task assignment, and real-time sync.",
     type: "Shared Projects",
     author: { name: "kenji_k", avatar: "K" },
@@ -61,7 +61,7 @@ const projects: Project[] = [
   },
   {
     id: "5",
-    title: "Verve — Developer Portfolio",
+    title: "Verve - Developer Portfolio",
     description: "Dark-themed minimalist personal website featuring MDX blog engine, GitHub activity feed, and terminal modal.",
     type: "My Projects",
     author: { name: "You", avatar: "Y" },
@@ -71,7 +71,7 @@ const projects: Project[] = [
   },
   {
     id: "6",
-    title: "Nexus — API Documentation",
+    title: "Nexus - API Documentation",
     description: "Interactive API reference portal with live endpoint tester, dark code snippet blocks, and automatic SDK gen.",
     type: "Shared Projects",
     author: { name: "alex_dev", avatar: "A" },

@@ -67,6 +67,16 @@
   --anvil-surface-raised: #121215;
   --anvil-border: rgba(255, 255, 255, 0.08);
   --anvil-border-hover: rgba(255, 255, 255, 0.2);
+
+  /* Sidebar tokens */
+  --sidebar: #000000;
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: #ffffff;
+  --sidebar-primary-foreground: #000000;
+  --sidebar-accent: rgba(255, 255, 255, 0.06);
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: rgba(255, 255, 255, 0.06);
+  --sidebar-ring: #ffffff;
 }
 
 @layer base {
