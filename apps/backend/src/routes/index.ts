@@ -7,6 +7,6 @@ appRouter.get("/health",(req: Request,res: Response) => {
     return res.status(200).json({success:true});
 });
 
-appRouter.use("/project",projectRouter);
+appRouter.use("/projects",projectRouter);
 
 export default appRouter;

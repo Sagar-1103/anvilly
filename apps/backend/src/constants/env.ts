@@ -15,7 +15,7 @@ const optionalEnv = <T>(key: string, defaultValue:T): string | T => {
 }
 
 export const env = {
-    port: optionalEnv("PORT",3000) as number,
+    port: optionalEnv("PORT",3001) as number,
     corsOrigin: requiredEnv("CORS_ORIGIN"),
     jwtSecret: requiredEnv("JWT_SECRET"),
     geminiApiKey: requiredEnv("GEMINI_API_KEY"),

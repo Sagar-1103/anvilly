@@ -1,5 +1,5 @@
-import { exec } from "child_process";
-import { promisify } from "util";
+import type Sandbox from "e2b";
+import type { EventStream } from "../event-stream";
 
 export const bashTool:any = {
     type: "function",
@@ -22,12 +22,18 @@ export const bashTool:any = {
 }
 
 
-export const bashToolHandler = async (args: {
-  command: string;
-}): Promise<{ stderr: string; stdout: string } | { error: string }> => {
+export const bashToolHandler = async (
+  sandbox: Sandbox,
+  eventStream: EventStream,
+  args: {
+    command: string;
+  }
+): Promise<{ stderr: string; stdout: string } | { error: string }> => {
   try {
-    let res = await promisify(exec)(args.command);
-    return res;
+    const response = await sandbox.commands.run(args.command);
+    // send event stream
+    eventStream.send("tool_call",response);
+    return response;
   } catch (error) {
     return { error: (error as Error).message };
   }

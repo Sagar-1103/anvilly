@@ -1,9 +1,9 @@
 import type { Request, Response, NextFunction } from "express"
-import type { Chunk, Message } from "./types";
+import type { Message } from "./types";
 
 export const AsyncHandler = (fn: any) => async(req:Request, res:Response, next: NextFunction) => {
     try {
-        fn(req,res,next);
+        await fn(req,res,next);
     } catch (error) {
         return res.status(500).json({success:false,error});
     }
@@ -15,16 +15,6 @@ export const getUserId = (req:Request,res:Response) => {
         return res.status(403).json({success:false,message:"User id not found"});
     }
     return userId;
-}
-
-export const sendChunk = (data:Chunk,res:Response) => {
-    res.write(JSON.stringify(data) + "\n");
-}
-
-export const endStream = (res:Response) => {
-    res.on("close", () => {
-        res.end();
-    });
 }
 
 export const parseHistory = (messages: Message[]) => {

@@ -14,12 +14,9 @@ interface ToolCall {
     content?: string,
 }
 
-export interface Chunk {
-    type:"question" | "text",
-    payload: any,
-}
-
 export interface StreamMessage {
     type: "",
     
 }
+
+export type EventType = "project" | "question" | "text" | "tool_call"

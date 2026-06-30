@@ -103,26 +103,67 @@ function ChatSidebar() {
     feedRef.current?.scrollTo({ top: feedRef.current.scrollHeight, behavior: "smooth" });
   }, [msgs]);
 
-  const send = (e?: React.FormEvent) => {
+  // const send = (e?: React.FormEvent) => {
+  //   e?.preventDefault();
+  //   const txt = prompt.trim();
+  //   if (!txt || busy) return;
+  //   setMsgs((m) => [...m, { id: Date.now().toString(), role: "user", body: txt }]);
+  //   setPrompt("");
+  //   setBusy(true);
+  //   setTimeout(() => {
+  //     setMsgs((m) => [
+  //       ...m,
+  //       {
+  //         id: (Date.now() + 1).toString(),
+  //         role: "assistant",
+  //         thinking: "Thought for 2s",
+  //         body: `Done! I've updated the app based on "${txt}". Preview is live.`,
+  //       },
+  //     ]);
+  //     setBusy(false);
+  //   }, 1400);
+  // };
+
+  const send = async(e?: React.FormEvent) => {
     e?.preventDefault();
-    const txt = prompt.trim();
-    if (!txt || busy) return;
-    setMsgs((m) => [...m, { id: Date.now().toString(), role: "user", body: txt }]);
-    setPrompt("");
-    setBusy(true);
-    setTimeout(() => {
-      setMsgs((m) => [
-        ...m,
-        {
-          id: (Date.now() + 1).toString(),
-          role: "assistant",
-          thinking: "Thought for 2s",
-          body: `Done! I've updated the app based on "${txt}". Preview is live.`,
-        },
-      ]);
-      setBusy(false);
-    }, 1400);
-  };
+    const res = await fetch("http://localhost:3001/api/projects", {
+      method:"POST",
+      body:JSON.stringify({userPrompt:prompt.trim()}),
+      headers:{
+        "Content-Type":"application/json"
+      }
+    });
+
+    const reader = res.body!.getReader();
+    const decoder = new TextDecoder("utf-8");
+    let buffer = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      
+      if (value) {
+        buffer += decoder.decode(value, { stream: true });
+        const events = buffer.split('\n\n');
+        buffer = events.pop() ?? '';
+        for (const raw of events) {
+          if (!raw.trim()) continue;
+          console.log("RAW", raw);
+          
+          const eventMatch = raw.match(/^event: (.+)$/m);
+          const dataMatch = raw.match(/^data: (.+)$/m);
+          
+          if (dataMatch) {
+            const eventName = eventMatch ? eventMatch[1] : "message";
+            const data = JSON.parse(dataMatch[1]);
+            console.log(eventName, data);
+            
+          }
+        }
+      }
+      
+      if (done) break;
+    }
+  }
 
   return (
     <Sidebar collapsible="icon" className="border-r border-white/[0.06]">

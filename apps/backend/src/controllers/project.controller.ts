@@ -1,16 +1,14 @@
 import type { Request, Response } from "express";
-import { AsyncHandler, endStream } from "../utils/helper-functions";
+import { AsyncHandler} from "../utils/helper-functions";
 import { createProjectSchema } from "../utils/project-schema";
 import { sendValidationError } from "../utils/validation";
 import { prisma } from "@repo/db/client";
 import Sandbox from "e2b";
 import { env } from "../constants/env";
+import { EventStream } from "../utils/event-stream";
+import { agentLoop } from "../utils/agent-loop";
 
 export const createProject = AsyncHandler(async(req:Request,res:Response) => {
-    // res.setHeader("Content-Type", "text/event-stream");
-    // res.setHeader("Cache-Control", "no-cache");
-    // res.setHeader("Connection", "keep-alive");
-    // res.flushHeaders(); 
     // const userId = getUserId(req,res);
     const userId = "d9df9041-9938-4992-b42b-942b437b014d";
 
@@ -22,6 +20,10 @@ export const createProject = AsyncHandler(async(req:Request,res:Response) => {
     }
 
     const { userPrompt } = parsedBody.data;
+
+    const eventStream = new EventStream(req,res);
+
+    eventStream.addHeaders();
 
     const sandbox = await Sandbox.create({
         template:"react-shadcn-bun",
@@ -36,8 +38,12 @@ export const createProject = AsyncHandler(async(req:Request,res:Response) => {
         },
     });
 
-    // endStream(res);
-    return res.status(201).json({success:true,project,message:"Project created successfully"});
+    eventStream.send("project",project);
+
+    await agentLoop(res,eventStream,sandbox,userPrompt);
+
+    eventStream.autoEnd();
+    // return res.status(201).json({success:true,project,message:"Project created successfully"});
 });
 
 export const getProject = AsyncHandler(async(req:Request,res:Response) => {

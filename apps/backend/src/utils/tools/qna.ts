@@ -1,5 +1,6 @@
+import type Sandbox from "e2b";
 import type { Response } from "express";
-import { sendChunk } from "../helper-functions";
+import type { EventStream } from "../event-stream";
 
 export const qnaTool = {
     type:'function',
@@ -21,12 +22,11 @@ export const qnaTool = {
     }
 }
 
-export const qnaToolHandler = async(args:{ question: string, recommended: string },res: Response) => {
+export const qnaToolHandler = async(sandbox:Sandbox, eventStream:EventStream, args:{ question: string, recommended: string }) => {
     const questionId = crypto.randomUUID();
     const { question, recommended } = args;
-    sendChunk({type:"question",payload:{questionId,question,recommended}},res);
 
-    //TODO: take input from user
+    eventStream.send("question",{questionId,question,recommended});
 
     return recommended;
 }

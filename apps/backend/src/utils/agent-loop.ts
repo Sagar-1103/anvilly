@@ -5,7 +5,10 @@ import { systemPrompt } from "./prompt";
 import type { Message } from "./types";
 import { qnaTool, qnaToolHandler } from "./tools/qna";
 import { bashTool, bashToolHandler } from "./tools/bash";
-import { endStream, parseHistory, sendChunk } from "./helper-functions";
+import { parseHistory } from "./helper-functions";
+import type { EventStream } from "./event-stream";
+import fs from "fs";
+import type Sandbox from "e2b";
 
 export const llm = new GoogleGenAI({
     apiKey:env.geminiApiKey,
@@ -18,7 +21,7 @@ const toolHandlers = {
     "bash_tool": bashToolHandler
 }
 
-export const agentLoop = async(userPrompt: string,res: Response) => {
+export const agentLoop = async(res: Response,eventStream:EventStream,sandbox:Sandbox,userPrompt: string,) => {
 
     let previousId: any = undefined;
     let interaction: any = undefined;
@@ -45,7 +48,7 @@ export const agentLoop = async(userPrompt: string,res: Response) => {
         });
 
         if (interaction.output_text) {
-            sendChunk({ type: "text", payload: interaction.output_text },res);
+            eventStream.send("text",interaction.output_text);
             messages.push({role:"AI",content:interaction.output_text});
         }
 
@@ -61,7 +64,7 @@ export const agentLoop = async(userPrompt: string,res: Response) => {
                 continue;
             }
 
-            const result = await handler(step.arguments,res);
+            const result = await handler(sandbox,eventStream,step.arguments);
             console.log(step.name," | ",JSON.stringify(step.arguments));
             messages.push({role:"TOOL_CALL",name:step.name,callId: step.id,arguments:step.arguments,result});
         }
@@ -71,5 +74,6 @@ export const agentLoop = async(userPrompt: string,res: Response) => {
         }
         previousId = interaction.id;
     }
-    endStream(res);
+    fs.writeFileSync("./memory.json",JSON.stringify(messages,null,2));
+    eventStream.autoEnd();
 }
