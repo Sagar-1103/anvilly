@@ -23,6 +23,7 @@ export const udpateFileTool:any = {
 
 export const updateFileToolHandler = async(sandbox:Sandbox, eventStream: EventStream, args:{ location: string,content:string }) => {
     const { location, content } = args;
-    const response = await sandbox.files.write(location,content);
+    const targetLocation = location.startsWith("/") ? location : `/home/user/app/${location}`;
+    const response = await sandbox.files.write(targetLocation,content);
     return response;
 }

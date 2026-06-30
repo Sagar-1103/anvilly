@@ -67,5 +67,4 @@ export const agentLoop = async(res: Response,eventStream:EventStream,sandbox:San
         previousId = interaction.id;
     }
     fs.writeFileSync("./memory.json",JSON.stringify(messages,null,2));
-    eventStream.autoEnd();
 }

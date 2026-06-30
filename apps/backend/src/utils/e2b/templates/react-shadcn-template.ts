@@ -5,10 +5,12 @@ const main = async() => {
     const template = Template()
     .fromBunImage("1.3-slim")
     .setWorkdir("/home/user/app")
-    .runCmd("bun init --react=tailwind")
-    .setStartCmd("bun --hot dev",waitForURL("http://localhost:3000"));
+    .runCmd("bun init --react=shadcn")
+    .runCmd("bun add pm2")
+    .runCmd("bunx pm2 ping")
+    .setStartCmd(`bunx pm2 start "bun run start" --name app --interpreter none`,waitForURL("http://localhost:3000"));
 
-    return await Template.build(template, 'react-bun', {
+    return await Template.build(template, 'bun-react-shadcn', {
         onBuildLogs: defaultBuildLogger(),
     })
 }

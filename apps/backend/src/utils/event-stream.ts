@@ -4,10 +4,12 @@ import type { EventType } from "./types";
 export class EventStream {
     req:Request;
     res:Response;
+    isConnected:boolean;
 
     constructor(req:Request,res:Response) {
         this.req = req;
         this.res = res;
+        this.isConnected = false;
     }
 
     addHeaders() {
@@ -16,21 +18,23 @@ export class EventStream {
         this.res.setHeader("X-Accel-Buffering","no");
         this.res.setHeader("Connection","keep-alive");
         this.res.flushHeaders();
+        this.isConnected = true;
     }
 
     send(event: EventType,data:any) {
+        if (!this.isConnected) {
+            console.log("Not connected");
+            return;
+        };
         this.res.write(`event: ${event}\n`);
         this.res.write(`data: ${JSON.stringify(data)}\n\n`);
     }
 
-    autoEnd() {
+    end() {
         this.req.on("close",()=>{
+            this.isConnected = false;            
             this.res.end();
         })
     }
 
-    forceEnd() {
-        this.res.end();
-    }
-    
 }

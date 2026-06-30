@@ -5,7 +5,15 @@ export const AsyncHandler = (fn: any) => async(req:Request, res:Response, next: 
     try {
         await fn(req,res,next);
     } catch (error) {
-        return res.status(500).json({success:false,error});
+        console.error("Error in AsyncHandler:", error);
+        if (res.headersSent) {
+            if (!res.writableEnded) {
+                res.write(`event: error\ndata: ${JSON.stringify({ message: error instanceof Error ? error.message : String(error) })}\n\n`);
+                res.end();
+            }
+            return;
+        }
+        return res.status(500).json({success:false, error: error instanceof Error ? error.message : error});
     }
 }
 
