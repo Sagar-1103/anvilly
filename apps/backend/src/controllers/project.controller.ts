@@ -3,10 +3,10 @@ import { AsyncHandler} from "../utils/helper-functions";
 import { createProjectSchema } from "../utils/project-schema";
 import { sendValidationError } from "../utils/validation";
 import { prisma } from "@repo/db/client";
-import Sandbox from "e2b";
 import { env } from "../constants/env";
 import { EventStream } from "../utils/event-stream";
 import { agentLoop } from "../utils/agent-loop";
+import Sandbox from "@e2b/code-interpreter";
 
 export const createProject = AsyncHandler(async(req:Request,res:Response) => {
     // const userId = getUserId(req,res);

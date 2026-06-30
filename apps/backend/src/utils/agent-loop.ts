@@ -3,23 +3,15 @@ import { GoogleGenAI } from "@google/genai";
 import { env } from "../constants/env";
 import { systemPrompt } from "./prompt";
 import type { Message } from "./types";
-import { qnaTool, qnaToolHandler } from "./tools/qna";
-import { bashTool, bashToolHandler } from "./tools/bash";
 import { parseHistory } from "./helper-functions";
 import type { EventStream } from "./event-stream";
 import fs from "fs";
-import type Sandbox from "e2b";
+import { toolHandlers, tools } from "./tools";
+import type Sandbox from "@e2b/code-interpreter";
 
 export const llm = new GoogleGenAI({
     apiKey:env.geminiApiKey,
 });
-
-const tools = [qnaTool,bashTool];
-
-const toolHandlers = {
-    "qna_tool": qnaToolHandler,
-    "bash_tool": bashToolHandler
-}
 
 export const agentLoop = async(res: Response,eventStream:EventStream,sandbox:Sandbox,userPrompt: string,) => {
 
@@ -42,7 +34,7 @@ export const agentLoop = async(res: Response,eventStream:EventStream,sandbox:San
             ${history}
             `,
             // @ts-ignore
-            tools,
+            tools: tools,
             system_instruction: systemPrompt,
             previous_interaction_id:previousId,
         });

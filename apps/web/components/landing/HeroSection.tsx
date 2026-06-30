@@ -1,5 +1,7 @@
 "use client";
 
+import { processStream } from "@/utils/event-stream";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 const quickSuggestions = [
@@ -12,6 +14,22 @@ const quickSuggestions = [
 export default function HeroSection() {
   const [promptValue, setPromptValue] = useState("");
   const [activeTab, setActiveTab] = useState<"mobile" | "web">("web");
+  const router = useRouter();
+
+  const handleSendPrompt = async(e: React.FormEvent) => {
+    e.preventDefault();
+    const res = await fetch("http://localhost:3001/api/projects", {
+      method:"POST",
+      body:JSON.stringify({userPrompt: promptValue.trim()}),
+      headers:{
+        "Content-Type":"application/json"
+      }
+    });
+
+    const reader = res.body!.getReader();
+    
+    await processStream(reader,router);
+  }
 
   return (
     <section
@@ -36,8 +54,8 @@ export default function HeroSection() {
 
       {/* Premium Polished Prompt Box Container */}
       <div className="relative z-10 mt-14 w-full max-w-2xl animate-fade-in-up stagger-3">
-        <div className="relative group rounded-3xl p-0.5 bg-gradient-to-b from-zinc-700/40 via-zinc-800/20 to-zinc-900/40 shadow-2xl shadow-black/80 transition-all duration-300 focus-within:from-zinc-500/60 focus-within:to-zinc-800/60">
-          <div className="bg-[#09090c] rounded-[22px] p-4 backdrop-blur-xl border border-zinc-800/60 flex flex-col justify-between min-h-[210px]">
+        <div className="relative group rounded-3xl p-0.5 bg-linear-to-b from-zinc-700/40 via-zinc-800/20 to-zinc-900/40 shadow-2xl shadow-black/80 transition-all duration-300 focus-within:from-zinc-500/60 focus-within:to-zinc-800/60">
+          <div className="bg-[#09090c] rounded-[22px] p-4 backdrop-blur-xl border border-zinc-800/60 flex flex-col justify-between min-h-52.5">
 
             {/* Top Bar: Segmented Tab Pills */}
             <div className="flex items-center justify-between mb-3 pb-2 border-b border-zinc-800/40">
@@ -119,7 +137,7 @@ export default function HeroSection() {
               </div>
 
               {/* Generate Button with Sparkle Icon */}
-              <button className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white text-black text-xs font-bold hover:bg-zinc-200 transition-all shadow-lg shadow-white/5 group-hover:scale-[1.01]">
+              <button onClick={handleSendPrompt} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white text-black text-xs font-bold hover:bg-zinc-200 transition-all shadow-lg shadow-white/5 group-hover:scale-[1.01]">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
                   <path
                     d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z"
