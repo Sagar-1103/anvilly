@@ -16,7 +16,8 @@ declare global {
 
 export const requireAuth = async(req:Request, res:Response, next:NextFunction) => {
     try {
-        const token = req.headers["authorization"]?.split("Bearer ")?.[0];
+        const token = req.headers["authorization"]?.split("Bearer ")?.[1];
+        
         if (!token) {
             return res.status(403).json({success:false,message:"Access token required"});
         }

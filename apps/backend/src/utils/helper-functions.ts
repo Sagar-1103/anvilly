@@ -18,11 +18,7 @@ export const AsyncHandler = (fn: any) => async(req:Request, res:Response, next: 
 }
 
 export const getUserId = (req:Request,res:Response) => {
-    const userId = req.userId;
-    if (!userId) {
-        return res.status(403).json({success:false,message:"User id not found"});
-    }
-    return userId;
+    return req.userId;
 }
 
 export const parseHistory = (messages: Message[]) => {

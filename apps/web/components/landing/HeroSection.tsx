@@ -1,8 +1,9 @@
 "use client";
 
-import { processStream } from "@/utils/event-stream";
+import { processStream } from "@/lib/event-stream";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useSession } from "next-auth/react";
 
 const quickSuggestions = [
   "Portfolio with dark mode & contact form",
@@ -12,6 +13,7 @@ const quickSuggestions = [
 ];
 
 export default function HeroSection() {
+  const { status, data:session } = useSession();
   const [promptValue, setPromptValue] = useState("");
   const [activeTab, setActiveTab] = useState<"mobile" | "web">("web");
   const router = useRouter();
@@ -22,7 +24,8 @@ export default function HeroSection() {
       method:"POST",
       body:JSON.stringify({userPrompt: promptValue.trim()}),
       headers:{
-        "Content-Type":"application/json"
+        "Content-Type":"application/json",
+        "Authorization":`Bearer ${session?.jwtToken}`
       }
     });
 
@@ -34,7 +37,9 @@ export default function HeroSection() {
   return (
     <section
       id="hero"
-      className="relative flex flex-col items-center justify-center px-6 pt-44 pb-28 overflow-hidden"
+      className={`relative flex flex-col items-center justify-center px-6 pt-44 pb-28 overflow-hidden ${
+        status !== "authenticated" ? "min-h-screen" : ""
+      }`}
     >
       {/* Background Grid & Light Spotlight */}
       <div className="absolute inset-0 hero-grid pointer-events-none opacity-50" />

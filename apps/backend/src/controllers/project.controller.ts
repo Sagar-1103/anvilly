@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { AsyncHandler } from "../utils/helper-functions";
+import { AsyncHandler, getUserId } from "../utils/helper-functions";
 import { createProjectSchema } from "../utils/project-schema";
 import { sendValidationError } from "../utils/validation";
 import { prisma } from "@repo/db/client";
@@ -9,11 +9,14 @@ import { agentLoop } from "../utils/agent-loop";
 import Sandbox from "@e2b/code-interpreter";
 
 export const createProject = AsyncHandler(async (req: Request, res: Response) => {
-    // const userId = getUserId(req,res);
+    const userId = getUserId(req,res);
+    if (!userId) {
+        return res.status(403).json({success:false,message:"User id not found"});
+    }
+    
     const eventStream = new EventStream(req, res);
-
+    
     eventStream.addHeaders();
-    const userId = "d9df9041-9938-4992-b42b-942b437b014d";
 
     const parsedBody = createProjectSchema.safeParse(req.body);
 
