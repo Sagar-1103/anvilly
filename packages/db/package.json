@@ -6,6 +6,9 @@
   "exports":{
     "./client":"./src/index.ts"
   },
+  "scripts": {
+    "build":"bunx prisma generate"
+  },
   "devDependencies": {
     "@types/bun": "latest",
     "@types/pg": "^8.20.0",
