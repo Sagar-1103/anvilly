@@ -17,19 +17,19 @@ export const AsyncHandler = (fn: any) => async(req:Request, res:Response, next: 
     }
 }
 
-export const getUserId = (req:Request,res:Response) => {
+export const getUserId = (req:Request) => {
     return req.userId;
 }
 
 export const parseHistory = (messages: Message[]) => {
     const history = messages.map((m) => {
-        if (m.role!=="TOOL_CALL") {
-            return `ROLE:${m.role}, CONTENT:${m.content}`
+        if (m.role==="USER") {
+            return `ROLE:${m.role}, TYPE:${m.type}, CONTENT:${m.content}`;
         } else {
-            if (!m.name) {
-                return `ROLE:${m.role}, CONTENT:${m.content}`;
+            if (m.type==="TEXT") {
+                return `ROLE:${m.role}, TYPE:${m.type}, CONTENT:${m.content}`;
             }
-            return `ROLE:${m.role}, TOOL_NAME:${m.name}, ARGS:${m.arguments}, CALL_ID:${m.callId}, RESULT:${JSON.stringify(m.result)}`
+            return `ROLE:${m.role}, TYPE:${m.type},TOOL_NAME:${m.name}, ARGS:${JSON.stringify(m.arguments)}, CALL_ID:${m.callId}, RESULT:${JSON.stringify(m.result)}`
         }
     }).join("\n\n");
     return history;

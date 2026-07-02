@@ -1,5 +1,6 @@
 import type Sandbox from "@e2b/code-interpreter"
 import type { EventStream } from "../event-stream";
+import { env } from "../../constants/env";
 
 export const buildProjectTool: any = {
     type: "function",
@@ -16,7 +17,7 @@ export const buildProjectToolHandler = async (sandbox: Sandbox, eventStream: Eve
     try {
         const response = await sandbox.commands.run("bun run build", {
             cwd: "/home/user/app",
-            timeoutMs: 30000,
+            timeoutMs: env.sandboxTimeoutMs,
         });
 
         eventStream.send("tool_call", response);

@@ -2,35 +2,44 @@ import type Sandbox from "@e2b/code-interpreter";
 import type { EventStream } from "../event-stream";
 
 export const qnaTool = {
-    type:'function',
-    name:"qna_tool",
-    description: "Ask the user a clarification question whenever required information is missing or ambiguous. Use this tool only when you cannot confidently continue generating the project without additional user input. Do not ask for information that can be reasonably inferred from the user's prompt or previous context.",
-    parameters:{
-        type:"object",
-        properties:{
+    type: 'function',
+    name: "qna_tool",
+    description: "Ask the user a highly focused design, theme, layout, or feature clarification question to align the app's style and direction with their preferences. Use this when design, aesthetic choices, or layout decisions are ambiguous.",
+    parameters: {
+        type: "object",
+        properties: {
             question: {
                 type: "string",
-                description:"A single, clear clarification question. Keep it short, direct, and focused on one decision. Do not include explanations, suggestions, or multiple questions."
+                description: "A single, clear clarification question focusing on design style, theme, feature selection, or visual choices. Keep it concise."
             },
             options: {
                 type: "array",
-                description: "Optional concise answer choices that help the user respond quickly. Include only realistic options. If the answer is free-form, omit this field.",
-                items: { type:"string" }
+                description: "Concise, distinct answer choices representing premium themes, layouts, or feature scopes (e.g. ['Dark Mode + Violet Accent', 'Clean White + Minimalist']). Keep choices under 4 options.",
+                items: { type: "string" }
             },
             recommended: {
-                type:"number",
-                description:"The zero-based index of the option that is recommended as the default choice based on best practices. Only provide this when 'options' is present."
+                type: "number",
+                description: "The zero-based index of the option that is recommended as the default premium choice based on modern web design best practices."
             }
         },
         required: ["question"]
     }
 }
 
-export const qnaToolHandler = async(sandbox:Sandbox, eventStream:EventStream, args:{ question: string, recommended: string }) => {
+export const qnaToolHandler = async (
+    sandbox: Sandbox,
+    eventStream: EventStream,
+    args: { question: string; options?: string[]; recommended?: number }
+) => {
     const questionId = crypto.randomUUID();
-    const { question, recommended } = args;
+    const { question, options, recommended } = args;
 
-    eventStream.send("question",{questionId,question,recommended});
+    eventStream.send("question", { questionId, question, options, recommended });
 
-    return recommended ?? "Do as you please";
+    let fallbackResponse = "Do as you please";
+    if (options && typeof recommended === "number" && options?.[recommended]) {
+        fallbackResponse = options[recommended];
+    }
+
+    return fallbackResponse;
 }

@@ -1,9 +1,9 @@
 "use client";
 
-import { processStream } from "@/lib/event-stream";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useSession } from "next-auth/react";
+import axios from "axios";
 
 const quickSuggestions = [
   "Portfolio with dark mode & contact form",
@@ -20,18 +20,20 @@ export default function HeroSection() {
 
   const handleSendPrompt = async(e: React.FormEvent) => {
     e.preventDefault();
-    const res = await fetch("http://localhost:3001/api/projects", {
-      method:"POST",
-      body:JSON.stringify({userPrompt: promptValue.trim()}),
+    if (!promptValue.trim()) return;
+    const response = await axios.post("http://localhost:3001/api/projects",{
+      userPrompt: promptValue.trim(),
+    },{
       headers:{
         "Content-Type":"application/json",
         "Authorization":`Bearer ${session?.jwtToken}`
       }
     });
+    const res = await response.data;
 
-    const reader = res.body!.getReader();
-    
-    await processStream(reader,router);
+    if (res.success && res.project.id) {
+      router.push(`/projects/${res.project.id}`);
+    }
   }
 
   return (

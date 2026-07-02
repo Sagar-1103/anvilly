@@ -19,7 +19,7 @@ export default function Home() {
         {status === "authenticated" && <ProjectShowcase />}
       </main>
       <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
-    </div>
+  </div>
   );
 }
 

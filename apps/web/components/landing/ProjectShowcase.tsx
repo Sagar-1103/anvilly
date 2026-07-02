@@ -157,7 +157,7 @@ export default function ProjectShowcase() {
             >
               <div>
                 {/* Card Preview Mockup */}
-                <div className={`h-44 bg-gradient-to-br ${project.gradient} p-4 relative flex flex-col justify-between border-b border-zinc-800/60`}>
+                <div className={`h-44 bg-linear-to-br ${project.gradient} p-4 relative flex flex-col justify-between border-b border-zinc-800/60`}>
                   {/* Top Mockup Bar */}
                   <div className="flex items-center justify-between text-xs text-zinc-500">
                     <div className="flex items-center gap-1.5">
@@ -185,10 +185,7 @@ export default function ProjectShowcase() {
                   {/* Hover Open Project Overlay Button */}
                   <div className="absolute inset-0 bg-black/60 backdrop-blur-xs opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
                     <button className="px-4 py-2 bg-white text-black font-semibold text-xs rounded-lg shadow-lg hover:bg-zinc-200 transition-colors flex items-center gap-1.5">
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-                      </svg>
-                      Open in Builder
+                      Open
                     </button>
                   </div>
                 </div>

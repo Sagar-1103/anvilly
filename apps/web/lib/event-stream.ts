@@ -1,6 +1,5 @@
-import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
 
-export const processStream = async (reader:ReadableStreamDefaultReader<Uint8Array<ArrayBuffer>>,router:AppRouterInstance) => {
+export const processStream = async (reader:ReadableStreamDefaultReader<Uint8Array<ArrayBuffer>>) => {
     const decoder = new TextDecoder("utf-8");
     let buffer = "";
     while (true) {
@@ -19,11 +18,6 @@ export const processStream = async (reader:ReadableStreamDefaultReader<Uint8Arra
             const eventName = eventMatch ? eventMatch[1] : "text";
             const data = JSON.parse(dataMatch[1]);
             console.log(eventName, data);
-
-            // if (eventName==="project") {
-            //     router.push(`/projects/${data.id}`);
-            // }
-
           }
         }
       }

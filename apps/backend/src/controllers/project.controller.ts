@@ -1,23 +1,19 @@
-import type { Request, Response } from "express";
+import { request, type Request, type Response } from "express";
 import { AsyncHandler, getUserId } from "../utils/helper-functions";
-import { createProjectSchema } from "../utils/project-schema";
+import { answerQuestionSchema, createProjectSchema, updateProjectSchema } from "../utils/project-schema";
 import { sendValidationError } from "../utils/validation";
 import { prisma } from "@repo/db/client";
 import { env } from "../constants/env";
-import { EventStream } from "../utils/event-stream";
-import { agentLoop } from "../utils/agent-loop";
 import Sandbox from "@e2b/code-interpreter";
+import { agentLoop } from "../utils/agent-loop";
+import { EventStream } from "../utils/event-stream";
 
 export const createProject = AsyncHandler(async (req: Request, res: Response) => {
-    const userId = getUserId(req,res);
+    const userId = getUserId(req);
     if (!userId) {
         return res.status(403).json({success:false,message:"User id not found"});
     }
     
-    const eventStream = new EventStream(req, res);
-    
-    eventStream.addHeaders();
-
     const parsedBody = createProjectSchema.safeParse(req.body);
 
     if (!parsedBody.success) {
@@ -30,29 +26,67 @@ export const createProject = AsyncHandler(async (req: Request, res: Response) =>
     const sandbox = await Sandbox.create({
         template: "bun-react-shadcn",
         timeoutMs: env.sandboxTimeoutMs,
-        lifecycle: { onTimeout: "pause", autoResume: false }
+        lifecycle: { onTimeout: "pause", autoResume: true }
     });
 
     const project = await prisma.project.create({
         data: {
             sandboxId: sandbox.sandboxId,
+            prompt: userPrompt,
             userId,
         },
     });
 
-    const url = sandbox.getHost(3000);
-    eventStream.send("text", url);
+    return res.status(201).json({success:true,project,message:"Project created successfully"});
+});
 
-    eventStream.send("project", project);
+export const updateProject = AsyncHandler(async(req:Request,res:Response) => {
+    const userId = getUserId(req);
+    if (!userId) {
+        return res.status(403).json({success:false,message:"User id not found"});
+    }
 
-    await agentLoop(res, eventStream, sandbox, userPrompt);
+    const projectId = req.params.projectId as string;
+
+    if (!projectId) {
+        return res.status(401).json({ success: false, message: "Project Id is required" });
+    }
+    
+    const parsedBody = updateProjectSchema.safeParse(req.body);
+
+    if (!parsedBody.success) {
+        sendValidationError(res, parsedBody.error);
+        return;
+    }
+
+    const eventStream = new EventStream(req,res);
+    eventStream.addHeaders();
+
+    const { userPrompt } = parsedBody.data;
+
+    const project = await prisma.project.findUnique({
+        where:{
+            id:projectId,
+            userId,
+        },
+    });
+
+    if (!project) {
+        return res.status(404).json({success:false,message:"Project doesnt exist"});
+    }
+
+    const sandbox = await Sandbox.connect(project.sandboxId);
+
+    await agentLoop(eventStream,userId,projectId,sandbox,userPrompt);
 
     eventStream.end();
-
-    // return res.status(201).json({success:true,project,message:"Project created successfully"});
 });
 
 export const getProject = AsyncHandler(async (req: Request, res: Response) => {
+    const userId = getUserId(req);
+    if (!userId) {
+        return res.status(403).json({success:false,message:"User id not found"});
+    }
     const projectId = req.params.projectId as string;
 
     if (!projectId) {
@@ -62,6 +96,10 @@ export const getProject = AsyncHandler(async (req: Request, res: Response) => {
     const project = await prisma.project.findUnique({
         where: {
             id: projectId,
+            userId,
+        },
+        include:{
+            history: true
         },
     });
 
@@ -80,8 +118,30 @@ export const getProject = AsyncHandler(async (req: Request, res: Response) => {
     return res.status(200).json({ success: true, project, url, message: "Project fetched successfully" });
 });
 
+export const answerQuestion = AsyncHandler(async(req:Request,res:Response) => {
+    const parsedBody = answerQuestionSchema.safeParse(req.body);
+
+    if (!parsedBody.success) {
+        sendValidationError(res,parsedBody.error);
+        return;
+    }
+
+    const { type } = parsedBody.data;
+
+    if (type==="option") {
+        
+    } else {
+
+    }
+
+    return res.status(200).json({success:true,message:"Question answered successfully"});
+});
+
 export const pingProject = AsyncHandler(async (req: Request, res: Response) => {
-    const userId = "d9df9041-9938-4992-b42b-942b437b014d";
+    const userId = getUserId(req);
+    if (!userId) {
+        return res.status(403).json({success:false,message:"User id not found"});
+    }
     const projectId = req.params.projectId as string;
 
     let project = await prisma.project.findUnique({

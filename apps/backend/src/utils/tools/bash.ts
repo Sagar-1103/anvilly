@@ -1,10 +1,12 @@
 import type Sandbox from "@e2b/code-interpreter";
 import type { EventStream } from "../event-stream";
+import { env } from "../../constants/env";
+import type { CommandResult } from "@e2b/code-interpreter";
 
 export const bashTool:any = {
     type: "function",
     name: "bash_tool",
-    description: "Run a shell command for installing packages (e.g. bun add, bunx --bun shadcn@latest add), listing files, or other utility commands. Do NOT use this tool to: build the project (use build_project_tool), start or restart the dev server (use run_project_tool), create or write files (use create_file_tool), read file contents (use read_file_tool), update file contents (use update_file_tool), or delete files (use delete_file_tool).",
+    description: "Run a shell command for installing packages (e.g. bun add, bunx --bun shadcn@latest add), listing files, or other utility commands. CRITICAL: Do NOT run build commands (such as bun run build) or dev server commands (such as bun dev) using this tool. You MUST use the build_project_tool to build/compile, and run_project_tool to start/restart the server. Do NOT use this tool to create, read, update, or delete files (use the respective file tools).",
     parameters: {
         type: "object",
         properties:{
@@ -20,7 +22,7 @@ export const bashTool:any = {
 export const bashToolHandler = async(sandbox: Sandbox, eventStream: EventStream, args: { command:string }) => {
   try {
     const { command } = args
-    const response = await sandbox.commands.run(command, { cwd:"/home/user/app" });
+    const response = await sandbox.commands.run(command, { cwd:"/home/user/app", timeoutMs:env.sandboxTimeoutMs });
 
     eventStream.send("tool_call",response);
     return response;

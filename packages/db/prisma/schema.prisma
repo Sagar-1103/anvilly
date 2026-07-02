@@ -20,6 +20,7 @@ model User {
 model Project {
   id        String    @id @default(uuid())
   title     String?
+  prompt    String
   sandboxId String
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -30,17 +31,23 @@ model Project {
 
 enum HistoryType {
   TOOL_CALL
-  TEXT_MESSAGE
+  TEXT
 }
 
 enum Role {
   USER
-  ASSISTANT
+  AI
 }
 
 enum ToolCall {
   BASH_TOOL
+  BUILD_PROJECT_TOOL
+  CREATE_FILE_TOOL
+  DELETE_FILE_TOOL
   QNA_TOOL
+  READ_FILE_TOOL
+  RUN_PROJECT_TOOL
+  UPDATE_FILE_TOOL
 }
 
 model History {
