@@ -1,5 +1,9 @@
 
-export const processStream = async (reader:ReadableStreamDefaultReader<Uint8Array<ArrayBuffer>>) => {
+
+export const processStream = async (
+  reader:ReadableStreamDefaultReader<Uint8Array<ArrayBuffer>>,
+  reloadProjectLink:()=>void
+) => {
     const decoder = new TextDecoder("utf-8");
     let buffer = "";
     while (true) {
@@ -18,6 +22,10 @@ export const processStream = async (reader:ReadableStreamDefaultReader<Uint8Arra
             const eventName = eventMatch ? eventMatch[1] : "text";
             const data = JSON.parse(dataMatch[1]);
             console.log(eventName, data);
+
+            if (eventName==="restart_project") {
+              reloadProjectLink();
+            }
           }
         }
       }

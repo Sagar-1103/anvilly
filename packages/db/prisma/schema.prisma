@@ -39,24 +39,13 @@ enum Role {
   AI
 }
 
-enum ToolCall {
-  BASH_TOOL
-  BUILD_PROJECT_TOOL
-  CREATE_FILE_TOOL
-  DELETE_FILE_TOOL
-  QNA_TOOL
-  READ_FILE_TOOL
-  RUN_PROJECT_TOOL
-  UPDATE_FILE_TOOL
-}
-
 model History {
   id        String       @id @default(uuid())
   projectId String
   project   Project      @relation(fields: [projectId], references: [id])
   type      HistoryType
-  from      Role
-  contents  String
-  toolCall  ToolCall?
+  role      Role
+  content   String
+  toolCall  String?
   createdAt DateTime     @default(now())
 }

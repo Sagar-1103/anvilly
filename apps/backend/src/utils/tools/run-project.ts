@@ -20,7 +20,7 @@ export const runProjectToolHandler = async(sandbox:Sandbox, eventStream: EventSt
     } else {
         response = await sandbox.commands.run(`bunx pm2 start "bun run start" --name app --interpreter none`);
     }
-    eventStream.send("tool_call",response);
+    eventStream.send("restart_project",response);
 
     return response;
 }

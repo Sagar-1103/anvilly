@@ -7,6 +7,7 @@ import {
   SidebarFooter,
 } from "@/components/ui/sidebar";
 import { useEffect, useRef, useState } from "react";
+import { Project } from "@/lib/types";
 
 interface Message {
   id: string;
@@ -48,7 +49,7 @@ const seed: Message[] = [
   },
 ];
 
-export default function ChatSidebar() {
+export default function ChatSidebar({project,sendPrompt}:{project:Project,sendPrompt:(userPrompt: string) => Promise<void>}) {
   const [msgs, setMsgs] = useState<Message[]>(seed);
   const [prompt, setPrompt] = useState("");
   const [busy, setBusy] = useState(false);
@@ -58,25 +59,10 @@ export default function ChatSidebar() {
     feedRef.current?.scrollTo({ top: feedRef.current.scrollHeight, behavior: "smooth" });
   }, [msgs]);
 
-  const send = (e?: React.FormEvent) => {
+  const send = async(e?: React.FormEvent) => {
     e?.preventDefault();
     const txt = prompt.trim();
-    if (!txt || busy) return;
-    setMsgs((m) => [...m, { id: Date.now().toString(), role: "user", body: txt }]);
-    setPrompt("");
-    setBusy(true);
-    setTimeout(() => {
-      setMsgs((m) => [
-        ...m,
-        {
-          id: (Date.now() + 1).toString(),
-          role: "assistant",
-          thinking: "Thought for 2s",
-          body: `Done! I've updated the app based on "${txt}". Preview is live.`,
-        },
-      ]);
-      setBusy(false);
-    }, 1400);
+    await sendPrompt(txt);
   };
 
   return (
@@ -85,16 +71,13 @@ export default function ChatSidebar() {
       <SidebarHeader className="h-12 px-4 flex flex-row items-center gap-3 border-b border-white/6 shrink-0 bg-black">
         <Link href="/" className="shrink-0">
           <span className="text-[15px] font-extrabold tracking-tighter font-mono text-white">
-            anvilly<span className="text-zinc-600 font-normal">.</span>
+            anvilly
           </span>
         </Link>
-        <span className="h-4 w-px bg-white/8" />
-        <button className="flex items-center gap-1.5 text-[13px] font-medium text-zinc-300 hover:text-white transition-colors truncate">
-          Your Daily Tasks
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-zinc-600 shrink-0">
-            <path d="M6 9l6 6 6-6" />
-          </svg>
-        </button>
+        <span className="h-4 w-0.5 bg-white/10" />
+        <p className="flex items-center gap-1.5 text-[13px] font-medium text-white transition-colors truncate">
+          {project.title || "Untitled Project"}
+        </p>
       </SidebarHeader>
 
       {/* Chat Messages */}
@@ -183,17 +166,11 @@ export default function ChatSidebar() {
               className="flex-1 bg-transparent text-[13px] text-zinc-200 placeholder:text-zinc-600 resize-none outline-none leading-relaxed"
             />
             <div className="flex items-center justify-between pt-2 mt-1 border-t border-white/4">
-              <button type="button" className="w-6 h-6 rounded-md bg-white/4 border border-white/6 text-zinc-500 hover:text-white flex items-center justify-center transition-colors">
+              <button type="button" className="w-6 h-6 cursor-pointer rounded-md bg-white/4 border border-white/6 text-zinc-500 hover:text-white flex items-center justify-center transition-colors">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
               </button>
               <div className="flex items-center gap-2">
-                <button type="button" className="text-[11px] text-zinc-500 hover:text-zinc-300 font-medium flex items-center gap-0.5">
-                  Build <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 9l6 6 6-6" /></svg>
-                </button>
-                <button type="button" className="text-zinc-500 hover:text-zinc-300">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /></svg>
-                </button>
-                <button type="submit" disabled={!prompt.trim() || busy} className="w-6 h-6 rounded-lg bg-white text-black flex items-center justify-center disabled:opacity-20 hover:bg-zinc-200 transition-colors">
+                <button type="submit" disabled={!prompt.trim() || busy} className="w-6 h-6 cursor-pointer rounded-lg bg-white text-black flex items-center justify-center disabled:opacity-20 hover:bg-zinc-200 transition-colors">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><line x1="12" y1="19" x2="12" y2="5" /><polyline points="5 12 12 5 19 12" /></svg>
                 </button>
               </div>

@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import axios from "axios";
+import { useSession } from "next-auth/react";
+import { useEffect, useState } from "react";
 
 interface Project {
   id: string;
@@ -84,6 +86,7 @@ const projects: Project[] = [
 export default function ProjectShowcase() {
   const [activeTab, setActiveTab] = useState<typeof tabs[number]>("All Projects");
   const [searchQuery, setSearchQuery] = useState("");
+  const { data:session } = useSession();
 
   const filteredProjects = projects.filter((p) => {
     const matchesTab = activeTab === "All Projects" || p.type === activeTab;
@@ -93,6 +96,31 @@ export default function ProjectShowcase() {
       p.tags.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase()));
     return matchesTab && matchesSearch;
   });
+
+  const getProjects = async() => {
+    try {
+      const response = await axios.get("http://localhost:3001/api/projects",{
+        headers:{
+          "Content-Type":"application/json",
+          "Authorization":`Bearer ${session?.jwtToken}`
+        }
+      });
+      const res = await response.data;
+
+      if (res.success) {
+        console.log(res.projects);
+      }
+      
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  useEffect(()=>{
+    if (session?.jwtToken) {
+      getProjects();
+    }
+  },[session]);
 
   return (
     <section id="projects" className="relative py-10 px-6 max-w-7xl mx-auto">

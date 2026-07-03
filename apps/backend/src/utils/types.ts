@@ -15,7 +15,7 @@ interface AiTextMessage {
     content: string;
 }
 
-interface AiToolCallMessage {
+export interface AiToolCallMessage {
     role: "AI";
     type: "TOOL_CALL";
     name: string;
@@ -27,4 +27,4 @@ interface AiToolCallMessage {
 
 export type Message = UserMessage | AiTextMessage | AiToolCallMessage;
 
-export type EventType = "project" | "question" | "text" | "tool_call";
+export type EventType = "project" | "question" | "text" | "tool_call" | "restart_project";

@@ -2,7 +2,7 @@ import express from "express";
 import cors from "cors";
 import { env } from "./constants/env";
 import appRouter from "./routes";
-import { createClient } from "redis";
+import { connectRedis } from "./utils/redis";
 
 const app = express();
 const port = env.port;
@@ -12,14 +12,8 @@ app.use(cors({
     origin: env.corsOrigin
 }));
 
-export const redisClient = createClient({
-    url: env.redisUrl,
-});
-
 const main = async() => {
-    (await redisClient.connect()).on("error",(error)=>{
-        console.log("REDIS ERROR: ",error);
-    });
+    await connectRedis();
     app.listen(port, () => {
         console.log(`Server running on port ${port}`);
     });

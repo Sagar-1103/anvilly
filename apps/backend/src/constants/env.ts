@@ -21,5 +21,6 @@ export const env = {
     geminiApiKey: requiredEnv("GEMINI_API_KEY"),
     e2bApiKey: requiredEnv("E2B_API_KEY"),
     sandboxTimeoutMs: optionalEnv("SANDBOX_TIMEOUT_MS", 4 * 1000 * 60) as number,
-    redisUrl: requiredEnv("REDIS_URL")
+    redisUrl: requiredEnv("REDIS_URL"),
+    redisTtl: optionalEnv("REDIS_TTL",60*1000*60) as number,
 }

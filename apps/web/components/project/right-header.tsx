@@ -3,17 +3,22 @@
 import { useEffect, useRef, useState } from "react";
 import { SidebarTrigger, useSidebar } from "../ui/sidebar";
 import { signOut, useSession } from "next-auth/react";
+import { Project } from "@/lib/types";
 
 export default function RightHeader({
   device,
   setDevice,
   activeTab,
   setActiveTab,
+  reloadProjectLink,
+  project,
 }: {
   device: "desktop" | "tablet" | "mobile";
   setDevice: (d: "desktop" | "tablet" | "mobile") => void;
   activeTab: "preview" | "code";
   setActiveTab: (t: "preview" | "code") => void;
+  reloadProjectLink: () => void;
+  project: Project;
 }) {
   const { toggleSidebar, state } = useSidebar();
   const [page, setPage] = useState("/");
@@ -47,18 +52,23 @@ export default function RightHeader({
     p.label.toLowerCase().includes(pageSearch.toLowerCase())
   );
 
+  const openProjectUrl = () => {
+    if (!project.url) return;
+    window.open(project.url,"_blank");
+  }
+
   return (
     <header className="h-12 shrink-0 bg-black border-b border-white/6 px-4 flex items-center z-30 relative">
       {/* Left: sidebar toggle + preview/code switcher */}
       <div className="flex items-center gap-2.5 shrink-0">
-        <SidebarTrigger className="text-zinc-400 hover:text-white -ml-1" />
+        <SidebarTrigger className="text-zinc-400 cursor-pointer hover:text-white -ml-1" />
 
         <div className="flex p-0.5 rounded-lg bg-white/4 border border-white/6">
           {(["preview", "code"] as const).map((v) => (
             <button
               key={v}
               onClick={() => setActiveTab(v)}
-              className={`px-2.5 py-1 rounded-md text-[11px] font-semibold capitalize flex items-center gap-1.5 transition-all ${activeTab === v ? "bg-white/8 text-white" : "text-zinc-500 hover:text-zinc-300"
+              className={`px-2.5 cursor-pointer py-1 rounded-md text-[11px] font-semibold capitalize flex items-center gap-1.5 transition-all ${activeTab === v ? "bg-white/8 text-white" : "text-zinc-500 hover:text-zinc-300"
                 }`}
             >
               {v === "preview" ? (
@@ -81,7 +91,7 @@ export default function RightHeader({
             else if (device === "tablet") setDevice("mobile");
             else setDevice("desktop");
           }}
-          className={`p-1.5 rounded-lg transition-colors ${device === "desktop" ? "text-zinc-400 hover:text-white" : "text-white bg-white/8"}`}
+          className={`p-1.5 cursor-pointer rounded-lg transition-colors ${device === "desktop" ? "text-zinc-400 hover:text-white" : "text-white bg-white/8"}`}
           title={`Device mode: ${device} (click to switch)`}
         >
           {device === "desktop" && (
@@ -96,7 +106,7 @@ export default function RightHeader({
         </button>
 
         {/* Refresh */}
-        <button className="p-1.5 rounded-lg text-zinc-400 hover:text-white transition-colors" title="Refresh">
+        <button onClick={reloadProjectLink} className="p-1.5 cursor-pointer rounded-lg text-zinc-400 hover:text-white transition-colors" title="Refresh">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M21 2v6h-6" />
             <path d="M3 12a9 9 0 0 1 15-6.7L21 8" />
@@ -171,7 +181,7 @@ export default function RightHeader({
         </div>
 
         {/* External link */}
-        <button className="p-1.5 rounded-lg text-zinc-400 hover:text-white transition-colors" title="Open in new tab">
+        <button onClick={openProjectUrl} className="p-1.5 cursor-pointer rounded-lg text-zinc-400 hover:text-white transition-colors" title="Open in new tab">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
             <polyline points="15 3 21 3 21 9" />
@@ -243,8 +253,8 @@ export default function RightHeader({
             </div>
           )}
         </div>
-        <button className="px-3 py-1 rounded-lg bg-white/4 border border-white/6 text-[11px] font-semibold text-zinc-400 hover:text-white transition-colors">Share</button>
-        <button className="px-3.5 py-1 rounded-lg bg-white text-black text-[11px] font-bold hover:bg-zinc-200 transition-colors">Publish</button>
+        <button className="px-3 py-1 cursor-pointer rounded-lg bg-white/4 border border-white/6 text-[11px] font-semibold text-zinc-400 hover:text-white transition-colors">Share</button>
+        <button className="px-3.5 py-1 cursor-pointer rounded-lg bg-white text-black text-[11px] font-bold hover:bg-zinc-200 transition-colors">Publish</button>
       </div>
     </header>
   );

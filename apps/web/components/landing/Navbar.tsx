@@ -47,7 +47,7 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
         {/* Logo Text */}
         <a href="#" className="group flex items-center">
           <span className="text-xl font-extrabold tracking-tighter text-white font-mono transition-opacity duration-200 group-hover:opacity-80">
-            anvilly<span className="text-zinc-500 font-normal">.</span>
+            anvilly
           </span>
         </a>
 
@@ -71,7 +71,7 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
                     referrerPolicy="no-referrer"
                   />
                 ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-violet-600 to-indigo-700 flex items-center justify-center">
+                  <div className="w-full h-full bg-linear-to-br from-violet-600 to-indigo-700 flex items-center justify-center">
                     <span className="text-white text-xs font-bold leading-none">
                       {initial}
                     </span>

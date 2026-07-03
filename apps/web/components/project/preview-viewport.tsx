@@ -1,11 +1,17 @@
 "use client";
 
+import { RefObject } from "react";
+
 export default function PreviewViewport({
   device,
   activeTab,
+  projectUrl,
+  iframeRef
 }: {
   device: "desktop" | "tablet" | "mobile";
   activeTab: "preview" | "code";
+  projectUrl: string;
+  iframeRef: RefObject<HTMLIFrameElement | null>
 }) {
   return (
     <div className="flex-1 overflow-auto bg-[#111113] relative flex items-center justify-center p-3">
@@ -20,11 +26,13 @@ export default function PreviewViewport({
                 : "w-full h-full rounded-xl"
           }`}
         >
-          <iframe
-            src="https://www.nativewind.dev/"
+          {projectUrl && <iframe
+            ref={iframeRef}
+            src={projectUrl}
+            // src={"https://www.nativewind.dev/"}
             className="w-full h-full border-0"
             title="Preview"
-          />
+          />}
         </div>
       ) : (
         /* Code Editor View */

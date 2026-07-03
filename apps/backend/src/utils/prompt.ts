@@ -86,3 +86,10 @@ End with a short message:
 - Any notable decisions (e.g. "used Sheet instead of Dialog for the sidebar since it slides in from the edge")
 - Nothing else
 `;
+
+export const getTitleSystemPrompt = (userPrompt: string) => {
+   return `
+   Generate a short, creative 3-4 word title/name for a coding project based on this prompt: "${userPrompt}".
+   Do not include quotes, markdown formatting, or prefix text. Just return the title itself.
+   `;
+}

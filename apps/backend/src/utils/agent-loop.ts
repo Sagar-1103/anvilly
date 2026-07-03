@@ -1,13 +1,13 @@
 import { GoogleGenAI } from "@google/genai";
 import { env } from "../constants/env";
 import { systemPrompt } from "./prompt";
-import type { Message, MessageType, Role, ToolCall } from "./types";
+import type { AiToolCallMessage, Message, MessageType, Role, ToolCall } from "./types";
 import { parseHistory } from "./helper-functions";
 import type { EventStream } from "./event-stream";
 import { toolHandlers, tools } from "./tools";
 import type Sandbox from "@e2b/code-interpreter";
-import { redisClient } from "..";
 import { prisma } from "@repo/db/client";
+import { redisClient, storeInRedis } from "./redis";
 
 export const llm = new GoogleGenAI({
     apiKey:env.geminiApiKey,
@@ -19,8 +19,45 @@ export const agentLoop = async (eventStream: EventStream, userId:string, project
     let interaction: any = undefined;
     const key = `${userId}-${projectId}`
 
+    let messages:Message[] = []
+
     const redisMessages = await redisClient.get(key);
-    const messages: Message[] = redisMessages ? JSON.parse(redisMessages) : [];
+
+    if (!redisMessages) {
+        const dbMessages = await prisma.history.findMany({
+            where:{
+                projectId,
+                project:{
+                    userId,
+                }
+            },
+        });
+        messages = dbMessages.map((msg)=>{
+            if (msg.type==="TOOL_CALL" && msg.toolCall) {
+                const {arguments:v,callId,result,content} = JSON.parse(msg.content);
+                return {
+                    role:"AI",
+                    type:"TOOL_CALL",
+                    name:msg.toolCall.toLowerCase(),
+                    content,
+                    arguments:v,
+                    callId,
+                    result,
+                };
+            } else {
+                return {
+                    role:msg.role==="AI"?"AI":"USER",
+                    type:"TEXT",
+                    content: msg.content,
+                }
+            }
+        });
+        await storeInRedis(key,messages);
+
+    } else {
+        messages = redisMessages ? JSON.parse(redisMessages) : [];
+    }
+
     const messagesLength = messages.length;
 
     messages.push({ role: "USER",type:"TEXT",content: userPrompt });
@@ -45,7 +82,7 @@ export const agentLoop = async (eventStream: EventStream, userId:string, project
         if (interaction.output_text) {
             eventStream.send("text", interaction.output_text);
             messages.push({ role: "AI",type:"TEXT",content: interaction.output_text });
-            redisClient.set(key, JSON.stringify(messages));
+            await storeInRedis(key,messages)
         }
 
         let calledTool = false;
@@ -57,13 +94,13 @@ export const agentLoop = async (eventStream: EventStream, userId:string, project
 
             if (!handler) {
                 messages.push({ role: "AI",type:"TEXT", content: `Tool ${step.name} not found` });
-                redisClient.set(key, JSON.stringify(messages));
+                await storeInRedis(key,messages)
                 continue;
             }
             const result = await handler(sandbox, eventStream, step.arguments);
             console.log(step.name, " | ", JSON.stringify(step.arguments), " | ", step);
             messages.push({ role: "AI",type:"TOOL_CALL", name: step.name, callId: step.id, arguments: step.arguments, result });
-            redisClient.set(key, JSON.stringify(messages));
+            await storeInRedis(key,messages)
         }
 
         if (!calledTool) {
@@ -73,17 +110,17 @@ export const agentLoop = async (eventStream: EventStream, userId:string, project
     }
     const newMessages = messages.slice(messagesLength);
     const data = newMessages.map((message)=>{
-        const value:{projectId:string,from:Role,type:MessageType,contents:string,toolCall?:ToolCall} = {
+
+        const value:{projectId:string,role:Role,type:MessageType,content:string,toolCall?:ToolCall} = {
             projectId,
-            from: message.role === "USER" ? "USER" : "AI",
+            role: message.role,
             type: message.type,
-            contents: JSON.stringify(message),
-            toolCall: message.type==="TOOL_CALL" ? message.name as ToolCall : undefined,
+            content: message.type==="TEXT" ? (message.content||""):JSON.stringify({arguments:message.arguments,callId:message.callId,result:message.result,content:message.content,}),
+            toolCall: message.type==="TOOL_CALL" ? message.name.toUpperCase() as ToolCall : undefined,
         };
         return value;
     })
-    // await prisma.history.createMany({
-    //     data: [...data]
-    // })
-
+    await prisma.history.createMany({
+        data: [...data]
+    });
 }

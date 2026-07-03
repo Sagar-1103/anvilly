@@ -5,8 +5,11 @@ import { sendValidationError } from "../utils/validation";
 import { prisma } from "@repo/db/client";
 import { env } from "../constants/env";
 import Sandbox from "@e2b/code-interpreter";
-import { agentLoop } from "../utils/agent-loop";
+import { agentLoop, llm } from "../utils/agent-loop";
 import { EventStream } from "../utils/event-stream";
+import { getTitleSystemPrompt } from "../utils/prompt";
+import { redisClient, storeInRedis } from "../utils/redis";
+import type { Message } from "../utils/types";
 
 export const createProject = AsyncHandler(async (req: Request, res: Response) => {
     const userId = getUserId(req);
@@ -23,6 +26,11 @@ export const createProject = AsyncHandler(async (req: Request, res: Response) =>
 
     const { userPrompt } = parsedBody.data;
 
+    const interaction = await llm.interactions.create({
+        model: "gemini-3.5-flash",
+        input: getTitleSystemPrompt(userPrompt), 
+    });
+
     const sandbox = await Sandbox.create({
         template: "bun-react-shadcn",
         timeoutMs: env.sandboxTimeoutMs,
@@ -33,6 +41,7 @@ export const createProject = AsyncHandler(async (req: Request, res: Response) =>
         data: {
             sandboxId: sandbox.sandboxId,
             prompt: userPrompt,
+            title: interaction.output_text || "Untitled Project",
             userId,
         },
     });
@@ -107,15 +116,67 @@ export const getProject = AsyncHandler(async (req: Request, res: Response) => {
         return res.status(404).json({ success: false, message: "Project not found" });
     }
 
-    let url = "";
+    let messages: Message[] = [];
+    const key = `${userId}-${projectId}`;
+    const redisMessages = await redisClient.get(key);
+    
+    if (!redisMessages) {
+        messages = project.history.map((msg)=>{
+            if (msg.type==="TOOL_CALL" && msg.toolCall) {
+                const {arguments:v,callId,result,content} = JSON.parse(msg.content);
+                return {
+                    role:"AI",
+                    type:"TOOL_CALL",
+                    name:msg.toolCall.toLowerCase(),
+                    content,
+                    arguments:v,
+                    callId,
+                    result,
+                };
+            } else {
+                return {
+                    role:msg.role==="AI"?"AI":"USER",
+                    type:"TEXT",
+                    content: msg.content,
+                }
+            }
+        });
+        await storeInRedis(key,messages);
+    } else {
+        messages = redisMessages? JSON.parse(redisMessages) : project.history;
+    }
+
+    let url = "http://";
     try {
         const sandbox = await Sandbox.connect(project.sandboxId);
-        url = sandbox.getHost(3000);
+        url += sandbox.getHost(3000);
     } catch (error) {
         console.error("Error connecting to sandbox in getProject:", error);
     }
 
-    return res.status(200).json({ success: true, project, url, message: "Project fetched successfully" });
+    const data = {
+        title:project.title,
+        url,
+        userPrompt:project.prompt,
+        messages
+    }
+
+    return res.status(200).json({ success: true, data, message: "Project fetched successfully" });
+});
+
+export const getProjects = AsyncHandler(async(req:Request,res:Response) => {
+    const userId = getUserId(req);
+    if (!userId) {
+        return res.status(403).json({success:false,message:"User id not found"});
+    }
+
+    const projects = await prisma.project.findMany({
+        where:{
+            userId,
+        },
+    });
+
+    return res.status(200).json({success:true,projects,message:"Projects fetched successfully"});
 });
 
 export const answerQuestion = AsyncHandler(async(req:Request,res:Response) => {
