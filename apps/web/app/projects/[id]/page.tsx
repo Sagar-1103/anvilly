@@ -84,10 +84,8 @@ export default function ProjectIDEPage({
       style={{ "--sidebar-width": "400px", "--sidebar-width-icon": "0px" } as React.CSSProperties}
     >
       <div className="flex h-screen w-screen bg-black text-white overflow-hidden antialiased">
-        {/* LEFT: shadcn Sidebar */}
         <ChatSidebar project={project} sendPrompt={sendPrompt} />
 
-        {/* RIGHT: Main content area */}
         <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
           <RightHeader device={device} setDevice={setDevice} activeTab={activeTab} setActiveTab={setActiveTab} reloadProjectLink={reloadProjectLink} project={project} />
           <PreviewViewport device={device} activeTab={activeTab} projectUrl={project.url} iframeRef={iframeRef} />
