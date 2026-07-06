@@ -1,5 +1,7 @@
 import type { Request, Response, NextFunction } from "express"
 import type { Message } from "./types";
+import { redisClient, storeInRedis } from "./redis";
+import { prisma } from "@repo/db/client";
 
 export const AsyncHandler = (fn: any) => async(req:Request, res:Response, next: NextFunction) => {
     try {
@@ -33,4 +35,46 @@ export const parseHistory = (messages: Message[]) => {
         }
     }).join("\n\n");
     return history;
+}
+
+export const getMessages = async(userId:string,projectId:string) => {
+    let messages: Message[] = [];
+    const key = `${userId}-${projectId}`;
+    const redisMessages = await redisClient.get(key);
+    
+    if (!redisMessages) {
+        const dbMessages = await prisma.history.findMany({
+            where:{
+                projectId,
+                project:{
+                    userId,
+                }
+            },
+        });
+        messages = dbMessages.map((msg)=>{
+            if (msg.type==="TOOL_CALL" && msg.toolCall) {
+                const {arguments:v,callId,result,content} = JSON.parse(msg.content);
+                return {
+                    role:"AI",
+                    type:"TOOL_CALL",
+                    name:msg.toolCall.toLowerCase(),
+                    content,
+                    arguments:v,
+                    callId,
+                    result,
+                };
+            } else {
+                return {
+                    role:msg.role==="AI"?"AI":"USER",
+                    type:"TEXT",
+                    content: msg.content,
+                }
+            }
+        });
+        await storeInRedis(key,messages);
+    } else {
+        messages = JSON.parse(redisMessages);
+    }
+
+    return messages;
 }

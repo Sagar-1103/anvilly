@@ -1,13 +1,13 @@
 import { GoogleGenAI } from "@google/genai";
 import { env } from "../constants/env";
 import { systemPrompt } from "./prompt";
-import type { AiToolCallMessage, Message, MessageType, Role, ToolCall } from "./types";
-import { parseHistory } from "./helper-functions";
+import type { Message, MessageType, Role, ToolCall } from "./types";
+import { getMessages, parseHistory } from "./helper-functions";
 import type { EventStream } from "./event-stream";
 import { toolHandlers, tools } from "./tools";
 import type Sandbox from "@e2b/code-interpreter";
 import { prisma } from "@repo/db/client";
-import { redisClient, storeInRedis } from "./redis";
+import { storeInRedis } from "./redis";
 
 export const llm = new GoogleGenAI({
     apiKey:env.geminiApiKey,
@@ -19,45 +19,8 @@ export const agentLoop = async (eventStream: EventStream, userId:string, project
     let interaction: any = undefined;
     const key = `${userId}-${projectId}`
 
-    let messages:Message[] = []
-
-    const redisMessages = await redisClient.get(key);
-
-    if (!redisMessages) {
-        const dbMessages = await prisma.history.findMany({
-            where:{
-                projectId,
-                project:{
-                    userId,
-                }
-            },
-        });
-        messages = dbMessages.map((msg)=>{
-            if (msg.type==="TOOL_CALL" && msg.toolCall) {
-                const {arguments:v,callId,result,content} = JSON.parse(msg.content);
-                return {
-                    role:"AI",
-                    type:"TOOL_CALL",
-                    name:msg.toolCall.toLowerCase(),
-                    content,
-                    arguments:v,
-                    callId,
-                    result,
-                };
-            } else {
-                return {
-                    role:msg.role==="AI"?"AI":"USER",
-                    type:"TEXT",
-                    content: msg.content,
-                }
-            }
-        });
-        await storeInRedis(key,messages);
-
-    } else {
-        messages = redisMessages ? JSON.parse(redisMessages) : [];
-    }
-
+    const messages: Message[] = await getMessages(userId,projectId);
+    
     const messagesLength = messages.length;
 
     messages.push({ role: "USER",type:"TEXT",content: userPrompt });

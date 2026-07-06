@@ -1,5 +1,5 @@
-import { request, type Request, type Response } from "express";
-import { AsyncHandler, getUserId } from "../utils/helper-functions";
+import type { Request, Response } from "express";
+import { AsyncHandler, getMessages, getUserId } from "../utils/helper-functions";
 import { answerQuestionSchema, createProjectSchema, updateProjectSchema } from "../utils/project-schema";
 import { sendValidationError } from "../utils/validation";
 import { prisma } from "@repo/db/client";
@@ -8,7 +8,6 @@ import Sandbox from "@e2b/code-interpreter";
 import { agentLoop, llm } from "../utils/agent-loop";
 import { EventStream } from "../utils/event-stream";
 import { getTitleSystemPrompt } from "../utils/prompt";
-import { redisClient, storeInRedis } from "../utils/redis";
 import type { Message } from "../utils/types";
 
 export const createProject = AsyncHandler(async (req: Request, res: Response) => {
@@ -107,44 +106,13 @@ export const getProject = AsyncHandler(async (req: Request, res: Response) => {
             id: projectId,
             userId,
         },
-        include:{
-            history: true
-        },
     });
 
     if (!project) {
         return res.status(404).json({ success: false, message: "Project not found" });
     }
 
-    let messages: Message[] = [];
-    const key = `${userId}-${projectId}`;
-    const redisMessages = await redisClient.get(key);
-    
-    if (!redisMessages) {
-        messages = project.history.map((msg)=>{
-            if (msg.type==="TOOL_CALL" && msg.toolCall) {
-                const {arguments:v,callId,result,content} = JSON.parse(msg.content);
-                return {
-                    role:"AI",
-                    type:"TOOL_CALL",
-                    name:msg.toolCall.toLowerCase(),
-                    content,
-                    arguments:v,
-                    callId,
-                    result,
-                };
-            } else {
-                return {
-                    role:msg.role==="AI"?"AI":"USER",
-                    type:"TEXT",
-                    content: msg.content,
-                }
-            }
-        });
-        await storeInRedis(key,messages);
-    } else {
-        messages = redisMessages? JSON.parse(redisMessages) : project.history;
-    }
+    const messages: Message[] = await getMessages(userId,projectId);
 
     let url = "http://";
     try {
