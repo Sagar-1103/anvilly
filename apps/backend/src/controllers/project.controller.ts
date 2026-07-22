@@ -9,6 +9,7 @@ import { agentLoop, llm } from "../utils/agent-loop";
 import { EventStream } from "../utils/event-stream";
 import { getTitleSystemPrompt } from "../utils/prompt";
 import type { Message } from "../utils/types";
+import { pendingQuestions } from "../utils/tools/qna";
 
 export const createProject = AsyncHandler(async (req: Request, res: Response) => {
     const userId = getUserId(req);
@@ -84,6 +85,7 @@ export const updateProject = AsyncHandler(async(req:Request,res:Response) => {
     }
 
     const sandbox = await Sandbox.connect(project.sandboxId);
+    await sandbox.setTimeout(env.sandboxTimeoutMs);
 
     await agentLoop(eventStream,userId,projectId,sandbox,userPrompt);
 
@@ -117,6 +119,7 @@ export const getProject = AsyncHandler(async (req: Request, res: Response) => {
     let url = "http://";
     try {
         const sandbox = await Sandbox.connect(project.sandboxId);
+        await sandbox.setTimeout(env.sandboxTimeoutMs);
         url += sandbox.getHost(3000);
     } catch (error) {
         console.error("Error connecting to sandbox in getProject:", error);
@@ -126,7 +129,7 @@ export const getProject = AsyncHandler(async (req: Request, res: Response) => {
         title:project.title,
         url,
         userPrompt:project.prompt,
-        messages
+        messages,
     }
 
     return res.status(200).json({ success: true, data, message: "Project fetched successfully" });
@@ -142,6 +145,9 @@ export const getProjects = AsyncHandler(async(req:Request,res:Response) => {
         where:{
             userId,
         },
+        orderBy: {
+            createdAt: "desc",
+        },
     });
 
     return res.status(200).json({success:true,projects,message:"Projects fetched successfully"});
@@ -155,13 +161,17 @@ export const answerQuestion = AsyncHandler(async(req:Request,res:Response) => {
         return;
     }
 
-    const { type } = parsedBody.data;
+    const { questionId, answer } = parsedBody.data;
+    const pending = pendingQuestions.get(questionId);
 
-    if (type==="option") {
-        
-    } else {
-
+    if (!pending) {
+        return res.status(404).json({ success: false, message: "Question timed out or not found" });
     }
+
+    clearTimeout(pending.timeoutId);
+    pendingQuestions.delete(questionId);
+
+    pending.resolve(answer);
 
     return res.status(200).json({success:true,message:"Question answered successfully"});
 });
@@ -211,4 +221,42 @@ export const pingProject = AsyncHandler(async (req: Request, res: Response) => {
     }
 
     return res.status(201).json({ success: true, project, url, message: "Ping success" });
+});
+
+export const deleteProject = AsyncHandler(async (req: Request, res: Response) => {
+    const userId = getUserId(req);
+    if (!userId) {
+        return res.status(403).json({ success: false, message: "User id not found" });
+    }
+    const projectId = req.params.projectId as string;
+
+    if (!projectId) {
+        return res.status(400).json({ success: false, message: "Project ID is required" });
+    }
+
+    const project = await prisma.project.findFirst({
+        where: {
+            id: projectId,
+            userId,
+        },
+    });
+
+    if (!project) {
+        return res.status(404).json({ success: false, message: "Project not found or unauthorized" });
+    }
+
+    try {
+        const sandbox = await Sandbox.connect(project.sandboxId);
+        await sandbox.kill();
+    } catch (e) {
+        console.log("Could not kill sandbox or sandbox already inactive:", e);
+    }
+
+    await prisma.project.delete({
+        where: {
+            id: projectId,
+        },
+    });
+
+    return res.status(200).json({ success: true, message: "Project deleted successfully" });
 });

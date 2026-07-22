@@ -20,9 +20,9 @@ export default function PreviewViewport({
         <div
           className={`bg-white text-zinc-900 overflow-hidden shadow-2xl transition-all duration-300 ${
             device === "mobile"
-              ? "w-93.75 h-175 rounded-4xl border-[6px] border-zinc-800"
+              ? "w-[375px] max-w-full h-[667px] max-h-full rounded-3xl border-[6px] border-zinc-800"
               : device === "tablet"
-                ? "w-3xl h-256 rounded-3xl border-[5px] border-zinc-800"
+                ? "w-[768px] max-w-full h-[90%] max-h-full rounded-3xl border-[6px] border-zinc-800"
                 : "w-full h-full rounded-xl"
           }`}
         >

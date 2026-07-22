@@ -1,8 +1,11 @@
 
 
 export const processStream = async (
-  reader:ReadableStreamDefaultReader<Uint8Array<ArrayBuffer>>,
-  reloadProjectLink:()=>void
+  reader: ReadableStreamDefaultReader<Uint8Array<ArrayBuffer>>,
+  reloadProjectLink: () => void,
+  onText?: (text: string) => void,
+  onToolCall?: (toolData: any) => void,
+  onQuestion?: (questionData: any) => void,
 ) => {
     const decoder = new TextDecoder("utf-8");
     let buffer = "";
@@ -19,12 +22,30 @@ export const processStream = async (
           const dataMatch = raw.match(/^data: (.+)$/m);
           
           if (dataMatch) {
-            const eventName = eventMatch ? eventMatch[1] : "text";
-            const data = JSON.parse(dataMatch[1]);
-            console.log(eventName, data);
+            const eventName = eventMatch ? eventMatch[1].trim() : "text";
+            try {
+              const data = JSON.parse(dataMatch[1]);
+              console.log(eventName, data);
 
-            if (eventName==="restart_project") {
-              reloadProjectLink();
+              if (eventName === "text" && onText) {
+                const textContent = typeof data === "string" ? data : (data.content || data.text || JSON.stringify(data));
+                onText(textContent);
+              }
+
+              if (eventName === "tool_call" && onToolCall) {
+                onToolCall(data);
+              }
+
+              if (eventName === "question" && onQuestion) {
+                onQuestion(data);
+              }
+
+              if (eventName === "restart_project") {
+                reloadProjectLink();
+              }
+
+            } catch (err) {
+              console.error("Error parsing event stream message:", err);
             }
           }
         }

@@ -7,7 +7,7 @@ import { readFileTool, readFileToolHandler } from "./read-file";
 import { runProjectTool, runProjectToolHandler } from "./run-project";
 import { udpateFileTool, updateFileToolHandler } from "./update-file";
 
-export const tools = [qnaTool,bashTool,readFileTool,createFileTool,udpateFileTool,deleteFileTool,buildProjectTool,runProjectTool];
+export const tools = [qnaTool,bashTool,readFileTool,createFileTool,udpateFileTool,deleteFileTool,buildProjectTool,runProjectTool,{ type:'google_search' }];
 
 export const toolHandlers = {
     "qna_tool": qnaToolHandler,

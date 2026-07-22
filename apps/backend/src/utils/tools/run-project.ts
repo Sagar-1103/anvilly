@@ -13,14 +13,20 @@ export const runProjectTool:any = {
 }
 
 export const runProjectToolHandler = async(sandbox:Sandbox, eventStream: EventStream, args:{ }) => {
-    const status = await sandbox.commands.run("bunx pm2 describe app");
-    let response;
-    if (status.exitCode===0) {
-        response = await sandbox.commands.run("bunx pm2 restart app");
-    } else {
-        response = await sandbox.commands.run(`bunx pm2 start "bun run start" --name app --interpreter none`);
-    }
-    eventStream.send("restart_project",response);
+    try {
+        const status = await sandbox.commands.run("bunx pm2 describe app");
+        let response;
+        if (status.exitCode===0) {
+            response = await sandbox.commands.run("bunx pm2 restart app");
+        } else {
+            response = await sandbox.commands.run(`bunx pm2 start "bun run start" --name app --interpreter none`);
+        }
+        eventStream.send("restart_project",response);
 
-    return response;
+        return response;
+    } catch (error) {
+        console.log(error);
+        return { error: (error as Error).message };
+    }
+    
 }

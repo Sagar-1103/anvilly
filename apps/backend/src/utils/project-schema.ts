@@ -4,18 +4,10 @@ export const createProjectSchema = z.object({
     userPrompt: z.string().min(1,"User prompt is required"),
 });
 
-export const answerQuestionSchema = z.discriminatedUnion("type", [
-    z.object({
-        type:z.literal("option"),
-        questionId: z.string(),
-        answerIndex: z.number(),
-    }),
-    z.object({
-        type:z.literal("custom"),
-        questionId: z.string(),
-        answer: z.string(),
-    }),
-]);
+export const answerQuestionSchema = z.object({
+    questionId: z.string().min(1, "Question ID is required"),
+    answer: z.string().min(1, "Answer is required"),
+});
 
 export const updateProjectSchema = z.object({
     userPrompt: z.string(),

@@ -18,8 +18,13 @@ export const deleteFileTool:any = {
 }
 
 export const deleteFileToolHandler = async(sandbox:Sandbox, eventStream: EventStream, args:{ location: string }) => {
-    const { location } = args;
-    const targetLocation = location.startsWith("/") ? location : `/home/user/app/${location}`;
-    const response = await sandbox.files.remove(targetLocation);
-    return response;
+    try {
+        const { location } = args;
+        const targetLocation = location.startsWith("/") ? location : `/home/user/app/${location}`;
+        const response = await sandbox.files.remove(targetLocation);
+        return response;
+    } catch (error) {
+        console.error(error);
+        return { error: (error as Error).message };
+    }
 }

@@ -29,7 +29,7 @@ export const agentLoop = async (eventStream: EventStream, userId:string, project
     while (true) {
         const history = parseHistory(messages);
         interaction = await llm.interactions.create({
-            model: "gemini-3.1-pro-preview",
+            model: "gemini-3.5-flash",
             input: `
             Current prompt: ${currentPrompt}
 
@@ -49,6 +49,7 @@ export const agentLoop = async (eventStream: EventStream, userId:string, project
         }
 
         let calledTool = false;
+        let calledQna = false;
 
         for (const step of interaction.steps) {
             if (step.type !== "function_call") continue;
@@ -60,15 +61,26 @@ export const agentLoop = async (eventStream: EventStream, userId:string, project
                 await storeInRedis(key,messages)
                 continue;
             }
+            eventStream.send("tool_call", { name: step.name, arguments: step.arguments });
             const result = await handler(sandbox, eventStream, step.arguments);
             console.log(step.name, " | ", JSON.stringify(step.arguments), " | ", step);
             messages.push({ role: "AI",type:"TOOL_CALL", name: step.name, callId: step.id, arguments: step.arguments, result });
             await storeInRedis(key,messages)
+
+            if (step.name === "qna_tool") {
+                calledQna = true;
+                break;
+            }
         }
 
         if (!calledTool) {
             break;
         }
+
+        if (calledQna) {
+            currentPrompt = "The user has answered your clarification question (see history). Now proceed with building the project.";
+        }
+
         previousId = interaction.id;
     }
     const newMessages = messages.slice(messagesLength);

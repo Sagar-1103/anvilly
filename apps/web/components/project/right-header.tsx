@@ -21,9 +21,6 @@ export default function RightHeader({
   project: Project;
 }) {
   const { toggleSidebar, state } = useSidebar();
-  const [page, setPage] = useState("/");
-  const [pageDropdownOpen, setPageDropdownOpen] = useState(false);
-  const [pageSearch, setPageSearch] = useState("");
   const { data: session } = useSession();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -41,16 +38,6 @@ export default function RightHeader({
   const userImage = session?.user?.image;
   const userEmail = session?.user?.email;
   const initial = userEmail ? userEmail.charAt(0).toUpperCase() : "?";
-
-  const pages = [
-    { path: "/", label: "/" },
-    { path: "/dashboard", label: "/dashboard" },
-    { path: "/settings", label: "/settings" },
-  ];
-
-  const filteredPages = pages.filter((p) =>
-    p.label.toLowerCase().includes(pageSearch.toLowerCase())
-  );
 
   const openProjectUrl = () => {
     if (!project.url) return;
@@ -114,71 +101,6 @@ export default function RightHeader({
             <path d="M21 12a9 9 0 0 1-15 6.7L3 16" />
           </svg>
         </button>
-
-        {/* Page selector dark pill */}
-        <div className="relative">
-          <button
-            onClick={() => setPageDropdownOpen(!pageDropdownOpen)}
-            className="flex items-center gap-2 pl-4 pr-3 py-1.5 rounded-full bg-white/6 border border-white/8 hover:border-white/[0.14] transition-colors min-w-45"
-          >
-            <span className="text-[12px] font-medium text-zinc-200 flex-1 text-center">{page === "/" ? "Homepage" : page}</span>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-zinc-500 shrink-0">
-              <path d="M6 9l6 6 6-6" />
-            </svg>
-          </button>
-
-          {/* Dropdown */}
-          {pageDropdownOpen && (
-            <>
-              {/* Backdrop to close */}
-              <div className="fixed inset-0 z-40" onClick={() => { setPageDropdownOpen(false); setPageSearch(""); }} />
-
-              <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 z-50 w-65 bg-[#141417] border border-white/8 rounded-xl shadow-2xl overflow-hidden animate-fade-in-up">
-                {/* Search input */}
-                <div className="p-2 border-b border-white/6">
-                  <div className="flex items-center gap-2 bg-white/4 border border-white/6 rounded-lg px-3 py-2">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-zinc-500 shrink-0">
-                      <circle cx="11" cy="11" r="8" />
-                      <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                    </svg>
-                    <input
-                      type="text"
-                      value={pageSearch}
-                      onChange={(e) => setPageSearch(e.target.value)}
-                      placeholder="Find page or enter path"
-                      autoFocus
-                      className="bg-transparent text-[12px] text-zinc-200 placeholder:text-zinc-500 outline-none w-full"
-                    />
-                  </div>
-                </div>
-
-                {/* Page list */}
-                <div className="py-1 max-h-50 overflow-y-auto">
-                  {filteredPages.map((p) => (
-                    <button
-                      key={p.path}
-                      onClick={() => { setPage(p.path); setPageDropdownOpen(false); setPageSearch(""); }}
-                      className={`w-full px-3 py-2 text-left text-[12px] flex items-center gap-2 transition-colors ${page === p.path
-                        ? "text-white bg-white/6"
-                        : "text-zinc-400 hover:text-white hover:bg-white/4"
-                        }`}
-                    >
-                      {page === p.path && (
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="shrink-0">
-                          <polyline points="20 6 9 17 4 12" />
-                        </svg>
-                      )}
-                      <span className={page !== p.path ? "pl-5.25" : ""}>{p.label}</span>
-                    </button>
-                  ))}
-                  {filteredPages.length === 0 && (
-                    <p className="px-3 py-2 text-[12px] text-zinc-600">No pages found</p>
-                  )}
-                </div>
-              </div>
-            </>
-          )}
-        </div>
 
         {/* External link */}
         <button onClick={openProjectUrl} className="p-1.5 cursor-pointer rounded-lg text-zinc-400 hover:text-white transition-colors" title="Open in new tab">
@@ -253,8 +175,8 @@ export default function RightHeader({
             </div>
           )}
         </div>
-        <button className="px-3 py-1 cursor-pointer rounded-lg bg-white/4 border border-white/6 text-[11px] font-semibold text-zinc-400 hover:text-white transition-colors">Share</button>
-        <button className="px-3.5 py-1 cursor-pointer rounded-lg bg-white text-black text-[11px] font-bold hover:bg-zinc-200 transition-colors">Publish</button>
+        {/* <button className="px-3 py-1 cursor-pointer rounded-lg bg-white/4 border border-white/6 text-[11px] font-semibold text-zinc-400 hover:text-white transition-colors">Share</button>
+        <button className="px-3.5 py-1 cursor-pointer rounded-lg bg-white text-black text-[11px] font-bold hover:bg-zinc-200 transition-colors">Publish</button> */}
       </div>
     </header>
   );

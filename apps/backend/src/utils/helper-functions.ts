@@ -2,6 +2,7 @@ import type { Request, Response, NextFunction } from "express"
 import type { Message } from "./types";
 import { redisClient, storeInRedis } from "./redis";
 import { prisma } from "@repo/db/client";
+import type Sandbox from "@e2b/code-interpreter";
 
 export const AsyncHandler = (fn: any) => async(req:Request, res:Response, next: NextFunction) => {
     try {

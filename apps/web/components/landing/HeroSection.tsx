@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useSession } from "next-auth/react";
 import axios from "axios";
+import { BACKEND_URL } from "@/lib/config";
 
 const quickSuggestions = [
   "Portfolio with dark mode & contact form",
@@ -16,23 +17,33 @@ export default function HeroSection() {
   const { status, data:session } = useSession();
   const [promptValue, setPromptValue] = useState("");
   const [activeTab, setActiveTab] = useState<"mobile" | "web">("web");
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-  const handleSendPrompt = async(e: React.FormEvent) => {
-    e.preventDefault();
-    if (!promptValue.trim()) return;
-    const response = await axios.post("http://localhost:3001/api/projects",{
-      userPrompt: promptValue.trim(),
-    },{
-      headers:{
-        "Content-Type":"application/json",
-        "Authorization":`Bearer ${session?.jwtToken}`
-      }
-    });
-    const res = await response.data;
+  const handleSendPrompt = async(e?: React.FormEvent | React.KeyboardEvent) => {
+    if (e) e.preventDefault();
+    if (!promptValue.trim() || isLoading) return;
 
-    if (res.success && res.project.id) {
-      router.push(`/projects/${res.project.id}`);
+    setIsLoading(true);
+    try {
+      const response = await axios.post(`${BACKEND_URL}/api/projects`,{
+        userPrompt: promptValue.trim(),
+      },{
+        headers:{
+          "Content-Type":"application/json",
+          "Authorization":`Bearer ${session?.jwtToken}`
+        }
+      });
+      const res = await response.data;
+
+      if (res.success && res.project.id) {
+        router.push(`/projects/${res.project.id}`);
+      } else {
+        setIsLoading(false);
+      }
+    } catch (error) {
+      console.error("Failed to generate project:", error);
+      setIsLoading(false);
     }
   }
 
@@ -101,13 +112,20 @@ export default function HeroSection() {
             <textarea
               value={promptValue}
               onChange={(e) => setPromptValue(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSendPrompt(e);
+                }
+              }}
+              disabled={isLoading}
               placeholder={
                 activeTab === "mobile"
                   ? "Build a mobile fitness tracking app with daily goal rings and dark UI..."
                   : "Build a modern portfolio website with a dark theme and contact form..."
               }
               rows={3}
-              className="w-full bg-transparent text-zinc-100 placeholder:text-zinc-600 text-sm sm:text-base px-2 py-1 resize-none focus:outline-none leading-relaxed"
+              className="w-full bg-transparent text-zinc-100 placeholder:text-zinc-600 text-sm sm:text-base px-2 py-1 resize-none focus:outline-none leading-relaxed disabled:opacity-60"
             />
 
             {/* Quick Chips Suggestion Row */}
@@ -116,8 +134,9 @@ export default function HeroSection() {
                 {quickSuggestions.map((suggestion) => (
                   <button
                     key={suggestion}
+                    disabled={isLoading}
                     onClick={() => setPromptValue(suggestion)}
-                    className="shrink-0 px-2.5 py-1 rounded-md bg-zinc-900/50 hover:bg-zinc-800 text-[11px] text-zinc-400 hover:text-zinc-200 border border-zinc-800/60 transition-colors"
+                    className="shrink-0 px-2.5 py-1 rounded-md bg-zinc-900/50 hover:bg-zinc-800 text-[11px] text-zinc-400 hover:text-zinc-200 border border-zinc-800/60 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     + {suggestion}
                   </button>
@@ -130,8 +149,9 @@ export default function HeroSection() {
               <div className="flex items-center gap-2">
                 <button
                   type="button"
+                  disabled={isLoading}
                   aria-label="Attach file"
-                  className="w-8 h-8 cursor-pointer rounded-lg bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white flex items-center justify-center border border-zinc-800 transition-colors"
+                  className="w-8 h-8 cursor-pointer rounded-lg bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white flex items-center justify-center border border-zinc-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <line x1="12" y1="5" x2="12" y2="19" />
@@ -143,20 +163,53 @@ export default function HeroSection() {
                 </span>
               </div>
 
-              {/* Generate Button with Sparkle Icon */}
-              <button onClick={handleSendPrompt} className="inline-flex cursor-pointer items-center gap-2 px-5 py-2.5 rounded-xl bg-white text-black text-xs font-bold hover:bg-zinc-200 transition-all shadow-lg shadow-white/5 group-hover:scale-[1.01]">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                  <path
-                    d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z"
-                    fill="currentColor"
-                  />
-                  <path
-                    d="M19 2L20.25 5.75L24 7L20.25 8.25L19 12L17.75 8.25L14 7L17.75 5.75L19 2Z"
-                    fill="currentColor"
-                    opacity="0.7"
-                  />
-                </svg>
-                Generate
+              {/* Generate Button with Loader / Sparkle Icon */}
+              <button
+                type="button"
+                onClick={handleSendPrompt}
+                disabled={isLoading || !promptValue.trim()}
+                className="inline-flex cursor-pointer items-center gap-2 px-5 py-2.5 rounded-xl bg-white text-black text-xs font-bold hover:bg-zinc-200 transition-all shadow-lg shadow-white/5 group-hover:scale-[1.01] disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isLoading ? (
+                  <>
+                    <svg
+                      className="animate-spin h-3.5 w-3.5 text-black"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                    <span>Generating...</span>
+                  </>
+                ) : (
+                  <>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                      <path
+                        d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z"
+                        fill="currentColor"
+                      />
+                      <path
+                        d="M19 2L20.25 5.75L24 7L20.25 8.25L19 12L17.75 8.25L14 7L17.75 5.75L19 2Z"
+                        fill="currentColor"
+                        opacity="0.7"
+                      />
+                    </svg>
+                    <span>Generate</span>
+                  </>
+                )}
               </button>
             </div>
 

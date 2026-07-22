@@ -26,20 +26,42 @@ export const qnaTool = {
     }
 }
 
+interface PendingQuestion {
+    resolve: (answer: string) => void;
+    timeoutId: ReturnType<typeof setTimeout>;
+    fallbackResponse: string;
+}
+
+export const pendingQuestions = new Map<string, PendingQuestion>();
+
 export const qnaToolHandler = async (
     sandbox: Sandbox,
     eventStream: EventStream,
     args: { question: string; options?: string[]; recommended?: number }
 ) => {
-    const questionId = crypto.randomUUID();
-    const { question, options, recommended } = args;
+    try {
+        const questionId = crypto.randomUUID();
+        const { question, options, recommended } = args;
 
-    eventStream.send("question", { questionId, question, options, recommended });
+        eventStream.send("question", { questionId, question, options, recommended });
 
-    let fallbackResponse = "Do as you please";
-    if (options && typeof recommended === "number" && options?.[recommended]) {
-        fallbackResponse = options[recommended];
+        let fallbackResponse = "User specified no preference, proceed with best design judgment";
+        if (options && typeof recommended === "number" && options?.[recommended]) {
+            fallbackResponse = options[recommended];
+        }
+
+        const answer = await new Promise<string>((resolve) => {
+            const timeoutId = setTimeout(() => {
+                pendingQuestions.delete(questionId);
+                resolve(fallbackResponse);
+            }, 120000);
+
+            pendingQuestions.set(questionId, { resolve, timeoutId, fallbackResponse });
+        });
+
+        return answer;
+    } catch (error) {
+        console.error(error);
+        return { error: (error as Error).message };
     }
-
-    return fallbackResponse;
 }
