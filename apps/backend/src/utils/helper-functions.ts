@@ -41,7 +41,12 @@ export const parseHistory = (messages: Message[]) => {
 export const getMessages = async(userId:string,projectId:string) => {
     let messages: Message[] = [];
     const key = `${userId}-${projectId}`;
-    const redisMessages = await redisClient.get(key);
+    let redisMessages = null;
+    try {
+        redisMessages = await redisClient.get(key);
+    } catch (error) {
+        console.error("REDIS GET ERROR:", error);
+    }
     
     if (!redisMessages) {
         const dbMessages = await prisma.history.findMany({

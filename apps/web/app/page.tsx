@@ -15,7 +15,7 @@ export default function Home() {
     <div className="relative min-h-screen bg-black text-white overflow-x-hidden flex flex-col">
       <Navbar onOpenAuth={() => setIsAuthOpen(true)} />
       <main className="flex-1 flex flex-col justify-center">
-        <HeroSection />
+        <HeroSection onOpenAuth={() => setIsAuthOpen(true)} />
         {status === "authenticated" && <ProjectShowcase />}
       </main>
       <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />

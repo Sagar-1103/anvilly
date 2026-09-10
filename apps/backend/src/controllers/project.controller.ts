@@ -68,26 +68,29 @@ export const updateProject = AsyncHandler(async(req:Request,res:Response) => {
         return;
     }
 
-    const eventStream = new EventStream(req,res);
-    eventStream.addHeaders();
-
     const { userPrompt } = parsedBody.data;
 
     const project = await prisma.project.findUnique({
-        where:{
-            id:projectId,
-            userId,
+        where: {
+            id: projectId,
         },
     });
 
     if (!project) {
-        return res.status(404).json({success:false,message:"Project doesnt exist"});
+        return res.status(404).json({ success: false, message: "Project not found" });
     }
+
+    if (project.userId !== userId) {
+        return res.status(403).json({ success: false, message: "Access denied. You do not have permission to update this project." });
+    }
+
+    const eventStream = new EventStream(req, res);
+    eventStream.addHeaders();
 
     const sandbox = await Sandbox.connect(project.sandboxId);
     await sandbox.setTimeout(env.sandboxTimeoutMs);
 
-    await agentLoop(eventStream,userId,projectId,sandbox,userPrompt);
+    await agentLoop(eventStream, userId, projectId, sandbox, userPrompt);
 
     eventStream.end();
 });
@@ -95,7 +98,7 @@ export const updateProject = AsyncHandler(async(req:Request,res:Response) => {
 export const getProject = AsyncHandler(async (req: Request, res: Response) => {
     const userId = getUserId(req);
     if (!userId) {
-        return res.status(403).json({success:false,message:"User id not found"});
+        return res.status(403).json({ success: false, message: "User id not found" });
     }
     const projectId = req.params.projectId as string;
 
@@ -106,12 +109,15 @@ export const getProject = AsyncHandler(async (req: Request, res: Response) => {
     const project = await prisma.project.findUnique({
         where: {
             id: projectId,
-            userId,
         },
     });
 
     if (!project) {
         return res.status(404).json({ success: false, message: "Project not found" });
+    }
+
+    if (project.userId !== userId) {
+        return res.status(403).json({ success: false, message: "Access denied. You do not have permission to view this project." });
     }
 
     const messages: Message[] = await getMessages(userId,projectId);

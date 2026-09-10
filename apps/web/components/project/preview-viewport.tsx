@@ -2,6 +2,8 @@
 
 import { RefObject } from "react";
 
+import CodeEditorView from "./code-editor/CodeEditorView";
+
 export default function PreviewViewport({
   device,
   activeTab,
@@ -36,36 +38,7 @@ export default function PreviewViewport({
         </div>
       ) : (
         /* Code Editor View */
-        <div className="w-full h-full font-mono text-[13px] text-zinc-300 overflow-auto bg-[#0a0a0d] border border-white/6 rounded-xl p-6 shadow-2xl">
-          <div className="flex items-center justify-between pb-3 mb-4 border-b border-white/6 text-[11px] text-zinc-500">
-            <span className="flex items-center gap-2">
-              <svg
-                width="13"
-                height="13"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
-                <polyline points="14 2 14 8 20 8" />
-              </svg>
-              app/page.tsx
-            </span>
-            <span>TypeScript JSX</span>
-          </div>
-          <pre className="leading-relaxed whitespace-pre font-mono text-emerald-400/90">
-            <code>{`export default function App() {
-  return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24 bg-black text-white">
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm flex">
-        <h1 className="text-4xl font-bold tracking-tight">Anvilly Workspace</h1>
-      </div>
-    </main>
-  );
-}`}</code>
-          </pre>
-        </div>
+        <CodeEditorView />
       )}
     </div>
   );

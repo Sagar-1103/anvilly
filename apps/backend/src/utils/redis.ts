@@ -12,5 +12,9 @@ export const connectRedis = async() => {
 }
 
 export const storeInRedis = async(key:string,data:any) => {
-    await redisClient.set(key,JSON.stringify(data),{expiration:{type:"EX",value:env.redisTtl}});
+    try {
+        await redisClient.set(key,JSON.stringify(data),{expiration:{type:"EX",value:env.redisTtl}});
+    } catch (error) {
+        console.error("REDIS SET ERROR:", error);
+    }
 }
