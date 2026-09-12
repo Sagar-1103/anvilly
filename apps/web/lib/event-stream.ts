@@ -1,11 +1,11 @@
 
-
 export const processStream = async (
   reader: ReadableStreamDefaultReader<Uint8Array<ArrayBuffer>>,
   reloadProjectLink: () => void,
   onText?: (text: string) => void,
   onToolCall?: (toolData: any) => void,
   onQuestion?: (questionData: any) => void,
+  onFileChange?: (toolName: string, args: any) => void,
 ) => {
     const decoder = new TextDecoder("utf-8");
     let buffer = "";
@@ -32,8 +32,22 @@ export const processStream = async (
                 onText(textContent);
               }
 
-              if (eventName === "tool_call" && onToolCall) {
-                onToolCall(data);
+              if (eventName === "tool_call") {
+                if (onToolCall) {
+                  onToolCall(data);
+                }
+
+                // Fire onFileChange for file mutation tool calls
+                if (onFileChange && data?.name) {
+                  const toolName = data.name;
+                  if (
+                    toolName === "create_file_tool" ||
+                    toolName === "update_file_tool" ||
+                    toolName === "delete_file_tool"
+                  ) {
+                    onFileChange(toolName, data.arguments || {});
+                  }
+                }
               }
 
               if (eventName === "question" && onQuestion) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { use } from "react";
+import { use, useEffect, useRef } from "react";
 import { Loader2 } from "lucide-react";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import ChatSidebar from "@/components/project/chat-sidebar";
@@ -8,6 +8,7 @@ import RightHeader from "@/components/project/right-header";
 import PreviewViewport from "@/components/project/preview-viewport";
 import ProjectNotFound from "@/components/project/ProjectNotFound";
 import { useProjectIDE } from "@/hooks/use-project-ide";
+import { useSandboxFiles } from "@/hooks/use-sandbox-files";
 
 export default function ProjectIDEPage({
   params,
@@ -15,6 +16,8 @@ export default function ProjectIDEPage({
   params: Promise<{ id: string }>;
 }) {
   const { id: projectId } = use(params);
+
+  const sandboxFiles = useSandboxFiles(projectId);
 
   const {
     device,
@@ -31,7 +34,33 @@ export default function ProjectIDEPage({
     loading,
     error,
     getProject,
-  } = useProjectIDE(projectId);
+  } = useProjectIDE(projectId, sandboxFiles.handleFileChange);
+
+  const hasFetchedFiles = useRef(false);
+  useEffect(() => {
+    if (!loading && !error && !hasFetchedFiles.current) {
+      hasFetchedFiles.current = true;
+      sandboxFiles.fetchFileTree();
+    }
+  }, [loading, error, sandboxFiles]);
+
+  useEffect(() => {
+    if (
+      activeTab === "code" &&
+      sandboxFiles.filePaths.length === 0 &&
+      !sandboxFiles.loading
+    ) {
+      sandboxFiles.fetchFileTree();
+    }
+  }, [activeTab, sandboxFiles]);
+
+  const prevBusyRef = useRef(false);
+  useEffect(() => {
+    if (prevBusyRef.current && !busy) {
+      sandboxFiles.fetchFileTree();
+    }
+    prevBusyRef.current = busy;
+  }, [busy, sandboxFiles]);
 
   if (loading) {
     return (
@@ -94,6 +123,7 @@ export default function ProjectIDEPage({
             activeTab={activeTab}
             projectUrl={project.url}
             iframeRef={iframeRef}
+            sandboxFiles={sandboxFiles}
           />
         </main>
       </div>

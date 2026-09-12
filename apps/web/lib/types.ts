@@ -19,3 +19,17 @@ export interface ChatMessage {
     selectedAnswer?: string;
     createdAt?: string;
 }
+
+export interface SandboxFile {
+    name: string;
+    path: string;
+    language: string;
+    content: string;
+}
+
+export interface FileTreeNode {
+    name: string;
+    path: string;
+    isDirectory: boolean;
+    children?: FileTreeNode[];
+}

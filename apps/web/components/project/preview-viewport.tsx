@@ -1,24 +1,25 @@
 "use client";
 
 import { RefObject } from "react";
-
+import type { SandboxFilesState } from "@/hooks/use-sandbox-files";
 import CodeEditorView from "./code-editor/CodeEditorView";
 
 export default function PreviewViewport({
   device,
   activeTab,
   projectUrl,
-  iframeRef
+  iframeRef,
+  sandboxFiles,
 }: {
   device: "desktop" | "tablet" | "mobile";
   activeTab: "preview" | "code";
   projectUrl: string;
-  iframeRef: RefObject<HTMLIFrameElement | null>
+  iframeRef: RefObject<HTMLIFrameElement | null>;
+  sandboxFiles: SandboxFilesState;
 }) {
   return (
     <div className="flex-1 overflow-auto bg-[#111113] relative flex items-center justify-center p-3">
       {activeTab === "preview" ? (
-        /* Live Application Preview */
         <div
           className={`bg-white text-zinc-900 overflow-hidden shadow-2xl transition-all duration-300 ${
             device === "mobile"
@@ -31,14 +32,12 @@ export default function PreviewViewport({
           {projectUrl && <iframe
             ref={iframeRef}
             src={projectUrl}
-            // src={"https://www.nativewind.dev/"}
             className="w-full h-full border-0"
             title="Preview"
           />}
         </div>
       ) : (
-        /* Code Editor View */
-        <CodeEditorView />
+        <CodeEditorView sandboxFiles={sandboxFiles} />
       )}
     </div>
   );

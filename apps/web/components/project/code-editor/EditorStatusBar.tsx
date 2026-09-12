@@ -1,9 +1,9 @@
 "use client";
 
-import { ProjectFile } from "./mock-project-files";
+import type { SandboxFile } from "@/lib/types";
 
 interface EditorStatusBarProps {
-  activeFile: ProjectFile;
+  activeFile: SandboxFile;
   lineCount: number;
 }
 
@@ -16,7 +16,7 @@ export default function EditorStatusBar({
       <div className="flex items-center gap-4">
         <span className="flex items-center gap-1.5 text-zinc-400">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-          {activeFile.name}
+          {activeFile.path}
         </span>
         <span>{lineCount} lines</span>
       </div>
@@ -24,6 +24,10 @@ export default function EditorStatusBar({
       <div className="flex items-center gap-4">
         <span className="capitalize">{activeFile.language}</span>
         <span>UTF-8</span>
+        <span className="flex items-center gap-1.5 text-emerald-400/80">
+          <span className="w-1 h-1 rounded-full bg-emerald-400 animate-pulse" />
+          Live
+        </span>
       </div>
     </div>
   );

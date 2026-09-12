@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import axios from "axios";
 import { toast } from "sonner";
@@ -68,7 +68,7 @@ function extractTextChatMessage(m: any, idx: number): ChatMessage | null {
   };
 }
 
-export function useProjectIDE(projectId: string) {
+export function useProjectIDE(projectId: string, onFileChange?: (toolName: string, args: any) => void) {
   const { data: session, status } = useSession();
   const [device, setDevice] = useState<"desktop" | "tablet" | "mobile">("desktop");
   const [activeTab, setActiveTab] = useState<"preview" | "code">("preview");
@@ -81,6 +81,11 @@ export function useProjectIDE(projectId: string) {
   const fetchedProjectIdRef = useRef<string | null>(null);
   const isFetchingRef = useRef(false);
   const initialPromptSentRef = useRef(false);
+  const onFileChangeRef = useRef(onFileChange);
+
+  useEffect(() => {
+    onFileChangeRef.current = onFileChange;
+  }, [onFileChange]);
 
   const reloadProjectLink = () => {
     const iframe = iframeRef.current;
@@ -172,7 +177,8 @@ export function useProjectIDE(projectId: string) {
               },
             ];
           });
-        }
+        },
+        (toolName: string, args: any) => onFileChangeRef.current?.(toolName, args),
       );
     } catch (error) {
       console.error("Error in sendPrompt stream:", error);
