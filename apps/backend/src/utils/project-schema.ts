@@ -2,6 +2,7 @@ import { z } from "zod";
 
 export const createProjectSchema = z.object({
     userPrompt: z.string().min(1,"User prompt is required"),
+    template: z.enum(["bun-react-shadcn", "node-react-native-expo"]).optional().default("bun-react-shadcn"),
 });
 
 export const answerQuestionSchema = z.object({

@@ -7,6 +7,7 @@ interface DeviceToolbarProps {
   setDevice: (device: "desktop" | "tablet" | "mobile") => void;
   reloadProjectLink: () => void;
   projectUrl?: string;
+  template?: string;
 }
 
 export default function DeviceToolbar({
@@ -14,6 +15,7 @@ export default function DeviceToolbar({
   setDevice,
   reloadProjectLink,
   projectUrl,
+  template,
 }: DeviceToolbarProps) {
   const cycleDevice = () => {
     if (device === "desktop") setDevice("tablet");
@@ -26,9 +28,17 @@ export default function DeviceToolbar({
     window.open(projectUrl, "_blank");
   };
 
+  const isExpo = template === "node-react-native-expo";
+
   return (
-    <div className="flex items-center gap-1.5">
-      {/* Device cycle toggle button */}
+    <div className="flex items-center gap-2">
+      {isExpo && (
+        <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-indigo-950/70 border border-indigo-800/50 text-indigo-300 flex items-center gap-1 shadow-xs">
+          <Smartphone className="w-2.5 h-2.5" /> Expo Go
+        </span>
+      )}
+      <div className="flex items-center gap-1.5">
+        {/* Device cycle toggle button */}
       <button
         type="button"
         onClick={cycleDevice}
@@ -64,6 +74,7 @@ export default function DeviceToolbar({
       >
         <ExternalLink className="w-3.5 h-3.5" strokeWidth={2} />
       </button>
+      </div>
     </div>
   );
 }

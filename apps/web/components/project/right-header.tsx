@@ -38,6 +38,7 @@ export default function RightHeader({
           setDevice={setDevice}
           reloadProjectLink={reloadProjectLink}
           projectUrl={project.url}
+          template={project.template}
         />
       </div>
 

@@ -41,8 +41,7 @@ export const processStream = async (
                 if (onFileChange && data?.name) {
                   const toolName = data.name;
                   if (
-                    toolName === "create_file_tool" ||
-                    toolName === "update_file_tool" ||
+                    toolName === "write_file_tool" ||
                     toolName === "delete_file_tool"
                   ) {
                     onFileChange(toolName, data.arguments || {});

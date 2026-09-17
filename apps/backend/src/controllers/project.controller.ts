@@ -5,11 +5,13 @@ import { sendValidationError } from "../utils/validation";
 import { prisma } from "@repo/db/client";
 import { env } from "../constants/env";
 import Sandbox from "@e2b/code-interpreter";
-import { agentLoop, llm } from "../utils/agent-loop";
+import { agentLoop } from "../utils/agent-loop";
+import { provider } from "../providers";
 import { EventStream } from "../utils/event-stream";
 import { getTitleSystemPrompt } from "../utils/prompt";
 import type { Message } from "../utils/types";
 import { pendingQuestions } from "../utils/tools/qna";
+import { ensureExpoRunning, initializeExpoSandbox } from "../utils/e2b/expo-sandbox";
 
 export const createProject = AsyncHandler(async (req: Request, res: Response) => {
     const userId = getUserId(req);
@@ -24,24 +26,46 @@ export const createProject = AsyncHandler(async (req: Request, res: Response) =>
         return;
     }
 
-    const { userPrompt } = parsedBody.data;
+    const { userPrompt, template = "bun-react-shadcn" } = parsedBody.data;
 
-    const interaction = await llm.interactions.create({
-        model: "gemini-3.5-flash",
-        input: getTitleSystemPrompt(userPrompt), 
+    const titleText = await provider.generateText({
+        model: "deepseek-flash",
+        prompt: getTitleSystemPrompt(userPrompt), 
     });
 
-    const sandbox = await Sandbox.create({
-        template: "bun-react-shadcn",
-        timeoutMs: env.sandboxTimeoutMs,
-        lifecycle: { onTimeout: "pause", autoResume: true }
-    });
+    let sandboxId = "";
+    let tunnelUrl: string | undefined = undefined;
+
+    if (template === "node-react-native-expo") {
+        const sandbox = await Sandbox.create({
+            template: "node-react-native-expo",
+            timeoutMs: env.sandboxTimeoutMs,
+            lifecycle: { onTimeout: "pause", autoResume: true }
+        });
+        sandboxId = sandbox.sandboxId;
+
+        try {
+            const expoDetails = await initializeExpoSandbox(sandbox);
+            tunnelUrl = expoDetails.tunnelUrl;
+        } catch (e) {
+            console.error("Error initializing Expo tunnel/metro:", e);
+        }
+    } else {
+        const sandbox = await Sandbox.create({
+            template: "bun-react-shadcn",
+            timeoutMs: env.sandboxTimeoutMs,
+            lifecycle: { onTimeout: "pause", autoResume: true }
+        });
+        sandboxId = sandbox.sandboxId;
+    }
 
     const project = await prisma.project.create({
         data: {
-            sandboxId: sandbox.sandboxId,
+            sandboxId,
             prompt: userPrompt,
-            title: interaction.output_text || "Untitled Project",
+            title: titleText || "Untitled Project",
+            template,
+            tunnelUrl,
             userId,
         },
     });
@@ -90,7 +114,7 @@ export const updateProject = AsyncHandler(async(req:Request,res:Response) => {
     const sandbox = await Sandbox.connect(project.sandboxId);
     await sandbox.setTimeout(env.sandboxTimeoutMs);
 
-    await agentLoop(eventStream, userId, projectId, sandbox, userPrompt);
+    await agentLoop(eventStream, userId, projectId, sandbox, userPrompt, project.template);
 
     eventStream.end();
 });
@@ -122,21 +146,42 @@ export const getProject = AsyncHandler(async (req: Request, res: Response) => {
 
     const messages: Message[] = await getMessages(userId,projectId);
 
-    let url = "http://";
+    let url = "";
+    let expoUrl = "";
+    let tunnelUrl = project.tunnelUrl || "";
+
     try {
         const sandbox = await Sandbox.connect(project.sandboxId);
         await sandbox.setTimeout(env.sandboxTimeoutMs);
-        url += sandbox.getHost(3000);
+
+        if (project.template === "node-react-native-expo") {
+            const expoDetails = await ensureExpoRunning(sandbox, project.tunnelUrl);
+            tunnelUrl = expoDetails.tunnelUrl;
+            expoUrl = expoDetails.expoUrl;
+            url = expoDetails.tunnelUrl;
+
+            if (tunnelUrl !== project.tunnelUrl) {
+                await prisma.project.update({
+                    where: { id: projectId },
+                    data: { tunnelUrl },
+                });
+            }
+        } else {
+            url = "http://" + sandbox.getHost(3000);
+        }
     } catch (error) {
         console.error("Error connecting to sandbox in getProject:", error);
     }
 
     const data = {
-        title:project.title,
+        title: project.title,
         url,
-        userPrompt:project.prompt,
+        expoUrl,
+        tunnelUrl,
+        template: project.template,
+        userPrompt: project.prompt,
         messages,
-    }
+    };
 
     return res.status(200).json({ success: true, data, message: "Project fetched successfully" });
 });
@@ -204,15 +249,35 @@ export const pingProject = AsyncHandler(async (req: Request, res: Response) => {
     }
 
     let url = "";
+    let expoUrl = "";
+    let tunnelUrl = project.tunnelUrl || "";
+
     try {
         const sandbox = await Sandbox.connect(project.sandboxId);
-        url = sandbox.getHost(3000);
+        if (project.template === "node-react-native-expo") {
+            const expoDetails = await ensureExpoRunning(sandbox, project.tunnelUrl);
+            tunnelUrl = expoDetails.tunnelUrl;
+            expoUrl = expoDetails.expoUrl;
+            url = expoDetails.tunnelUrl;
+        } else {
+            url = sandbox.getHost(3000);
+        }
     } catch (error) {
+        const templateToUse = project.template || "bun-react-shadcn";
         const sandbox = await Sandbox.create({
-            template: "bun-react-shadcn",
+            template: templateToUse,
             timeoutMs: env.sandboxTimeoutMs,
             lifecycle: { onTimeout: "pause", autoResume: false }
         });
+
+        if (templateToUse === "node-react-native-expo") {
+            const expoDetails = await initializeExpoSandbox(sandbox);
+            tunnelUrl = expoDetails.tunnelUrl;
+            expoUrl = expoDetails.expoUrl;
+            url = expoDetails.tunnelUrl;
+        } else {
+            url = sandbox.getHost(3000);
+        }
 
         project = await prisma.project.update({
             where: {
@@ -220,13 +285,12 @@ export const pingProject = AsyncHandler(async (req: Request, res: Response) => {
             },
             data: {
                 sandboxId: sandbox.sandboxId,
+                tunnelUrl: tunnelUrl || null,
             },
         });
-        url = sandbox.getHost(3000);
-        // will have to put all the project files and code to the new sandbox
     }
 
-    return res.status(201).json({ success: true, project, url, message: "Ping success" });
+    return res.status(201).json({ success: true, project, url, expoUrl, tunnelUrl, message: "Ping success" });
 });
 
 export const deleteProject = AsyncHandler(async (req: Request, res: Response) => {

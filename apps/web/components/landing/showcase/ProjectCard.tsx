@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Smartphone, Layout } from "lucide-react";
 import { BackendProject } from "./types";
 import ProjectCardMenu from "./ProjectCardMenu";
 
@@ -40,6 +41,7 @@ export default function ProjectCard({
   const router = useRouter();
   const title = project.title || "Untitled Project";
   const relativeTime = formatRelativeTime(project.updatedAt || project.createdAt);
+  const isMobile = project.template === "node-react-native-expo";
 
   return (
     <div
@@ -58,9 +60,16 @@ export default function ProjectCard({
               <span className="w-2 h-2 rounded-full bg-zinc-700" />
               <span className="w-2 h-2 rounded-full bg-zinc-700" />
             </div>
-            <span className="text-[10px] font-mono text-zinc-400 bg-zinc-950/80 px-2 py-0.5 rounded border border-zinc-800">
-              {relativeTime}
-            </span>
+            <div className="flex items-center gap-1.5">
+              {isMobile && (
+                <span className="text-[10px] font-mono text-indigo-300 bg-indigo-950/80 px-1.5 py-0.5 rounded border border-indigo-800/60 flex items-center gap-1">
+                  <Smartphone className="w-2.5 h-2.5" /> Expo
+                </span>
+              )}
+              <span className="text-[10px] font-mono text-zinc-400 bg-zinc-950/80 px-2 py-0.5 rounded border border-zinc-800">
+                {relativeTime}
+              </span>
+            </div>
           </div>
 
           {/* Abstract UI Representation */}
@@ -118,8 +127,18 @@ export default function ProjectCard({
           </span>
         </div>
 
-        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-zinc-400">
-          Project
+        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-zinc-400 flex items-center gap-1.5">
+          {isMobile ? (
+            <>
+              <Smartphone className="w-3 h-3 text-indigo-400" />
+              <span>Mobile (Expo)</span>
+            </>
+          ) : (
+            <>
+              <Layout className="w-3 h-3 text-zinc-400" />
+              <span>Web (React)</span>
+            </>
+          )}
         </span>
       </div>
     </div>

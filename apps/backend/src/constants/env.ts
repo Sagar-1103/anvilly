@@ -18,9 +18,9 @@ export const env = {
     port: optionalEnv("PORT", 3001) as number,
     corsOrigin: requiredEnv("CORS_ORIGIN"),
     jwtSecret: requiredEnv("JWT_SECRET"),
-    geminiApiKey: requiredEnv("GEMINI_API_KEY"),
     e2bApiKey: requiredEnv("E2B_API_KEY"),
     sandboxTimeoutMs: optionalEnv("SANDBOX_TIMEOUT_MS", 4 * 1000 * 60) as number,
     redisUrl: requiredEnv("REDIS_URL"),
     redisTtl: optionalEnv("REDIS_TTL",60*1000*60) as number,
+    deepseekApiKey: requiredEnv("DEEPSEEK_API_KEY"),
 }

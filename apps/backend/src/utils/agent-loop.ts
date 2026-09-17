@@ -1,22 +1,18 @@
-import { GoogleGenAI } from "@google/genai";
-import { env } from "../constants/env";
-import { systemPrompt } from "./prompt";
+import { provider } from "../providers";
+import type { ChatMessage } from "../providers/types";
+import { getSystemPrompt } from "./prompt";
 import type { Message, MessageType, Role, ToolCall } from "./types";
-import { getMessages, parseHistory } from "./helper-functions";
+import { getMessages, messagesToChatMessages } from "./helper-functions";
 import type { EventStream } from "./event-stream";
 import { toolHandlers, tools } from "./tools";
 import type Sandbox from "@e2b/code-interpreter";
 import { prisma } from "@repo/db/client";
 import { storeInRedis } from "./redis";
 
-export const llm = new GoogleGenAI({
-    apiKey:env.geminiApiKey,
-});
+const DEEPSEEK_MODEL = "deepseek-flash";
 
-export const agentLoop = async (eventStream: EventStream, userId:string, projectId:string , sandbox: Sandbox, userPrompt: string) => {
+export const agentLoop = async (eventStream: EventStream, userId:string, projectId:string , sandbox: Sandbox, userPrompt: string, template?: string) => {
 
-    let previousId: any = undefined;
-    let interaction: any = undefined;
     const key = `${userId}-${projectId}`
 
     const messages: Message[] = await getMessages(userId,projectId);
@@ -24,64 +20,45 @@ export const agentLoop = async (eventStream: EventStream, userId:string, project
     const messagesLength = messages.length;
 
     messages.push({ role: "USER",type:"TEXT",content: userPrompt });
-    let currentPrompt = userPrompt;
 
     while (true) {
-        const history = parseHistory(messages);
-        interaction = await llm.interactions.create({
-            model: "gemini-3.5-flash",
-            input: `
-            Current prompt: ${currentPrompt}
+        // Convert internal messages to OpenAI-compatible ChatMessage format
+        const chatMessages: ChatMessage[] = messagesToChatMessages(messages);
 
-            History:
-            ${history}
-            `,
-            // @ts-ignore
+        const response = await provider.chat({
+            model: DEEPSEEK_MODEL,
+            systemPrompt: getSystemPrompt(template),
+            messages: chatMessages,
             tools: tools,
-            system_instruction: systemPrompt,
-            previous_interaction_id: previousId,
         });
 
-        if (interaction.output_text) {
-            eventStream.send("text", interaction.output_text);
-            messages.push({ role: "AI",type:"TEXT",content: interaction.output_text });
+        if (response.text) {
+            eventStream.send("text", response.text);
+            messages.push({ role: "AI",type:"TEXT",content: response.text, reasoning_content: response.reasoning_content });
             await storeInRedis(key,messages)
         }
 
         let calledTool = false;
-        let calledQna = false;
 
-        for (const step of interaction.steps) {
-            if (step.type !== "function_call") continue;
+        for (const toolCall of response.toolCalls) {
             calledTool = true;
-            const handler = (toolHandlers as any)[step.name];
+            const handler = (toolHandlers as any)[toolCall.name];
 
             if (!handler) {
-                messages.push({ role: "AI",type:"TEXT", content: `Tool ${step.name} not found` });
+                messages.push({ role: "AI",type:"TEXT", content: `Tool ${toolCall.name} not found` });
                 await storeInRedis(key,messages)
                 continue;
             }
-            eventStream.send("tool_call", { name: step.name, arguments: step.arguments });
-            const result = await handler(sandbox, eventStream, step.arguments);
-            console.log(step.name, " | ", JSON.stringify(step.arguments), " | ", step);
-            messages.push({ role: "AI",type:"TOOL_CALL", name: step.name, callId: step.id, arguments: step.arguments, result });
+            eventStream.send("tool_call", { name: toolCall.name, arguments: toolCall.arguments });
+            const result = await handler(sandbox, eventStream, toolCall.arguments);
+            console.log(toolCall.name, " | ", JSON.stringify(toolCall.arguments), " | ", toolCall);
+            messages.push({ role: "AI",type:"TOOL_CALL", name: toolCall.name, callId: toolCall.id, arguments: toolCall.arguments, result, reasoning_content: response.reasoning_content });
             await storeInRedis(key,messages)
-
-            if (step.name === "qna_tool") {
-                calledQna = true;
-                break;
-            }
         }
 
         if (!calledTool) {
             break;
         }
-
-        if (calledQna) {
-            currentPrompt = "The user has answered your clarification question (see history). Now proceed with building the project.";
-        }
-
-        previousId = interaction.id;
     }
     const newMessages = messages.slice(messagesLength);
     const data = newMessages.map((message)=>{
@@ -90,7 +67,7 @@ export const agentLoop = async (eventStream: EventStream, userId:string, project
             projectId,
             role: message.role,
             type: message.type,
-            content: message.type==="TEXT" ? (message.content||""):JSON.stringify({arguments:message.arguments,callId:message.callId,result:message.result,content:message.content,}),
+            content: message.type==="TEXT" ? (message.content||""):JSON.stringify({arguments:message.arguments,callId:message.callId,result:message.result,content:message.content,reasoning_content:message.reasoning_content}),
             toolCall: message.type==="TOOL_CALL" ? message.name.toUpperCase() as ToolCall : undefined,
         };
         return value;

@@ -1,6 +1,6 @@
 "use client";
 
-import { Sparkles, Code2, Plus, SearchX, RotateCcw, FolderSync, Share2 } from "lucide-react";
+import { Sparkles, Code2, Plus, SearchX, RotateCcw, Smartphone, Layout } from "lucide-react";
 import { ShowcaseTabType } from "./types";
 
 interface ShowcaseEmptyStateProps {
@@ -17,7 +17,6 @@ export default function ShowcaseEmptyState({
   onSelectTab,
 }: ShowcaseEmptyStateProps) {
   const isSearchActive = Boolean(searchQuery && searchQuery.trim().length > 0);
-  const isSharedTab = activeTab === "Shared Projects";
 
   const handleScrollToForge = () => {
     const input = document.getElementById("hero-prompt-input");
@@ -76,8 +75,9 @@ export default function ShowcaseEmptyState({
     );
   }
 
-  // 2. Shared Projects Empty State
-  if (isSharedTab) {
+  // 2. Tab Filter Empty State (Mobile Apps / Web Apps)
+  if (activeTab === "Mobile Apps" || activeTab === "Web Apps") {
+    const isMobile = activeTab === "Mobile Apps";
     return (
       <div className="relative overflow-hidden rounded-3xl border border-zinc-800/80 bg-linear-to-b from-zinc-900/40 via-zinc-950/60 to-black p-8 sm:p-12 text-center shadow-2xl backdrop-blur-sm animate-fade-in">
         {/* Background ambient lighting */}
@@ -88,10 +88,11 @@ export default function ShowcaseEmptyState({
         <div className="relative z-10 flex justify-center mb-5">
           <div className="relative">
             <div className="w-16 h-16 rounded-2xl bg-linear-to-b from-zinc-800/90 to-zinc-900/90 border border-white/10 flex items-center justify-center text-white shadow-2xl shadow-black/80">
-              <FolderSync className="w-7 h-7 text-indigo-400" />
-            </div>
-            <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-lg bg-zinc-950 border border-zinc-800 flex items-center justify-center text-zinc-400 shadow-md">
-              <Share2 className="w-3.5 h-3.5" />
+              {isMobile ? (
+                <Smartphone className="w-7 h-7 text-indigo-400" />
+              ) : (
+                <Layout className="w-7 h-7 text-indigo-400" />
+              )}
             </div>
           </div>
         </div>
@@ -99,25 +100,35 @@ export default function ShowcaseEmptyState({
         {/* Headline and Description */}
         <div className="relative z-10 space-y-2 max-w-md mx-auto">
           <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
-            No shared projects yet
+            {isMobile ? "No mobile apps yet" : "No web apps yet"}
           </h3>
           <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
-            Projects shared with you by teammates or collaborators will appear right here.
+            {isMobile
+              ? "Create your first React Native Expo mobile project using the prompt box above."
+              : "Create your first React web project using the prompt box above."}
           </p>
         </div>
 
         {/* Primary Action Button */}
-        {onSelectTab && (
-          <div className="relative z-10 pt-6 flex items-center justify-center gap-3">
+        <div className="relative z-10 pt-6 flex items-center justify-center gap-3">
+          <button
+            type="button"
+            onClick={handleScrollToForge}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white text-black font-semibold text-xs hover:bg-zinc-200 active:scale-[0.98] transition-all shadow-xl shadow-white/5 cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Create {isMobile ? "Mobile App" : "Web App"}</span>
+          </button>
+          {onSelectTab && (
             <button
               type="button"
               onClick={() => onSelectTab("All Projects")}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white text-black font-semibold text-xs hover:bg-zinc-200 active:scale-[0.98] transition-all shadow-xl shadow-white/5 cursor-pointer"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-zinc-900 text-zinc-300 font-semibold text-xs hover:bg-zinc-800 active:scale-[0.98] transition-all border border-zinc-800 cursor-pointer"
             >
               <span>View All Projects</span>
             </button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     );
   }

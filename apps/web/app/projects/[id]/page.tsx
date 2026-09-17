@@ -121,6 +121,7 @@ export default function ProjectIDEPage({
           <PreviewViewport
             device={device}
             activeTab={activeTab}
+            project={project}
             projectUrl={project.url}
             iframeRef={iframeRef}
             sandboxFiles={sandboxFiles}

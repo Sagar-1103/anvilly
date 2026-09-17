@@ -169,14 +169,13 @@ export function useSandboxFiles(projectId: string) {
       const path = normalizePath(rawLocation);
       if (!path) return;
 
-      if (
-        toolName === "create_file_tool" ||
-        toolName === "update_file_tool"
-      ) {
+      if (toolName === "write_file_tool") {
         const content = args.content || "";
         const name = path.split("/").pop() || path;
         const language = getLanguageFromPath(path);
         const file: SandboxFile = { name, path, language, content };
+
+        const isExisting = filePaths.includes(path);
 
         // Cache content
         setFileContents((prev) => new Map(prev).set(path, content));
@@ -188,8 +187,7 @@ export function useSandboxFiles(projectId: string) {
         });
 
         // Badge
-        const changeType: "new" | "modified" =
-          toolName === "create_file_tool" ? "new" : "modified";
+        const changeType: "new" | "modified" = isExisting ? "modified" : "new";
         setRecentlyChanged((prev) => new Map(prev).set(path, changeType));
         setTimeout(() => {
           setRecentlyChanged((prev) => {

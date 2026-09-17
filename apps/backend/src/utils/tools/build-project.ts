@@ -2,20 +2,27 @@ import type Sandbox from "@e2b/code-interpreter"
 import type { EventStream } from "../event-stream";
 import { env } from "../../constants/env";
 
-export const buildProjectTool: any = {
+import type { ToolDefinition } from "../../providers/types";
+
+export const buildProjectTool: ToolDefinition = {
     type: "function",
-    name: "build_project_tool",
-    description: "Build the current project to verify it compiles successfully. Run this after every set of file changes before restarting the dev server. Read the output carefully, if the build fails, fix the errors and run this tool again before proceeding.",
-    parameters: {
-        type: "object",
-        properties: {},
-        required: []
+    function: {
+        name: "build_project_tool",
+        description: "Build or verify the current project to ensure it compiles successfully. Run this after every set of file changes before restarting the dev server. Read the output carefully; if verification fails, fix the errors and run this tool again before proceeding.",
+        parameters: {
+            type: "object",
+            properties: {},
+            required: []
+        },
     },
-}
+};
 
 export const buildProjectToolHandler = async (sandbox: Sandbox, eventStream: EventStream, args?: {}) => {
     try {
-        const response = await sandbox.commands.run("bun run build", {
+        const isExpo = await sandbox.files.exists("/home/user/app/app.json");
+        const buildCommand = isExpo ? "npx tsc --noEmit" : "bun run build";
+
+        const response = await sandbox.commands.run(buildCommand, {
             cwd: "/home/user/app",
             timeoutMs: env.sandboxTimeoutMs,
         });

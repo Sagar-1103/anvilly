@@ -1,30 +1,34 @@
 import type Sandbox from "@e2b/code-interpreter";
 import type { EventStream } from "../event-stream";
 
-export const qnaTool = {
+import type { ToolDefinition } from "../../providers/types";
+
+export const qnaTool: ToolDefinition = {
     type: 'function',
-    name: "qna_tool",
-    description: "Ask the user a highly focused design, theme, layout, or feature clarification question to align the app's style and direction with their preferences. Use this when design, aesthetic choices, or layout decisions are ambiguous.",
-    parameters: {
-        type: "object",
-        properties: {
-            question: {
-                type: "string",
-                description: "A single, clear clarification question focusing on design style, theme, feature selection, or visual choices. Keep it concise."
+    function: {
+        name: "qna_tool",
+        description: "Ask the user a highly focused design, theme, layout, or feature clarification question to align the app's style and direction with their preferences. Use this when design, aesthetic choices, or layout decisions are ambiguous.",
+        parameters: {
+            type: "object",
+            properties: {
+                question: {
+                    type: "string",
+                    description: "A single, clear clarification question focusing on design style, theme, feature selection, or visual choices. Keep it concise."
+                },
+                options: {
+                    type: "array",
+                    description: "Concise, distinct answer choices representing premium themes, layouts, or feature scopes (e.g. ['Dark Mode + Violet Accent', 'Clean White + Minimalist']). Keep choices under 4 options.",
+                    items: { type: "string" }
+                },
+                recommended: {
+                    type: "number",
+                    description: "The zero-based index of the option that is recommended as the default premium choice based on modern web design best practices."
+                }
             },
-            options: {
-                type: "array",
-                description: "Concise, distinct answer choices representing premium themes, layouts, or feature scopes (e.g. ['Dark Mode + Violet Accent', 'Clean White + Minimalist']). Keep choices under 4 options.",
-                items: { type: "string" }
-            },
-            recommended: {
-                type: "number",
-                description: "The zero-based index of the option that is recommended as the default premium choice based on modern web design best practices."
-            }
+            required: ["question"]
         },
-        required: ["question"]
-    }
-}
+    },
+};
 
 interface PendingQuestion {
     resolve: (answer: string) => void;
@@ -43,23 +47,23 @@ export const qnaToolHandler = async (
         const questionId = crypto.randomUUID();
         const { question, options, recommended } = args;
 
-        eventStream.send("question", { questionId, question, options, recommended });
-
-        let fallbackResponse = "User specified no preference, proceed with best design judgment";
-        if (options && typeof recommended === "number" && options?.[recommended]) {
-            fallbackResponse = options[recommended];
+        let selectedAnswer = "User specified no preference, proceed with best design judgment";
+        if (options && typeof recommended === "number" && options[recommended]) {
+            selectedAnswer = options[recommended];
+        } else if (options && options.length > 0 && options[0]) {
+            selectedAnswer = options[0];
         }
 
-        const answer = await new Promise<string>((resolve) => {
-            const timeoutId = setTimeout(() => {
-                pendingQuestions.delete(questionId);
-                resolve(fallbackResponse);
-            }, 120000);
-
-            pendingQuestions.set(questionId, { resolve, timeoutId, fallbackResponse });
+        eventStream.send("question", {
+            questionId,
+            question,
+            options,
+            recommended,
+            answered: true,
+            selectedAnswer,
         });
 
-        return answer;
+        return selectedAnswer;
     } catch (error) {
         console.error(error);
         return { error: (error as Error).message };

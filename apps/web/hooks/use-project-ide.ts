@@ -173,7 +173,8 @@ export function useProjectIDE(projectId: string, onFileChange?: (toolName: strin
                 role: "question",
                 content: questionData.question,
                 questionData,
-                answered: false,
+                answered: questionData.answered ?? false,
+                selectedAnswer: questionData.selectedAnswer || questionData.answer,
               },
             ];
           });
@@ -243,8 +244,26 @@ export function useProjectIDE(projectId: string, onFileChange?: (toolName: strin
 
       if (res.success) {
         fetchedProjectIdRef.current = projectId;
-        const { title, url, messages: backendMessages, userPrompt } = res.data;
-        setProject({ url: url, title: title });
+        const {
+          title,
+          url,
+          expoUrl,
+          tunnelUrl,
+          template,
+          messages: backendMessages,
+          userPrompt,
+        } = res.data;
+        setProject({
+          url: url || "",
+          title: title || "",
+          expoUrl,
+          tunnelUrl,
+          template,
+        });
+
+        if (template === "node-react-native-expo") {
+          setDevice("mobile");
+        }
 
         const chatMsgs: ChatMessage[] = (backendMessages || [])
           .map((m: any, idx: number) => extractTextChatMessage(m, idx))

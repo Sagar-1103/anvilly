@@ -1,6 +1,10 @@
 export interface Project {
-    title:string;
-    url:string;
+    id?: string;
+    title: string;
+    url: string;
+    template?: string;
+    expoUrl?: string;
+    tunnelUrl?: string;
 }
 
 export interface QuestionPayload {

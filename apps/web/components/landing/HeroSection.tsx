@@ -8,11 +8,18 @@ import { BACKEND_URL } from "@/lib/config";
 import HeroHeading from "./hero/HeroHeading";
 import PromptCard from "./hero/PromptCard";
 
-const quickSuggestions = [
+const webQuickSuggestions = [
   "Portfolio with dark mode & contact form",
   "SaaS Analytics Dashboard",
   "AI Writing Assistant with streaming",
   "E-commerce Storefront with cart",
+];
+
+const mobileQuickSuggestions = [
+  "Crypto wallet with cards & transactions",
+  "Fitness tracker with activity rings & dark UI",
+  "Food delivery app with menu & cart",
+  "Habit tracker with streak calendar & analytics",
 ];
 
 interface HeroSectionProps {
@@ -52,10 +59,14 @@ export default function HeroSection({ onOpenAuth }: HeroSectionProps = {}) {
 
     setIsLoading(true);
     try {
+      const selectedTemplate =
+        activeTab === "mobile" ? "node-react-native-expo" : "bun-react-shadcn";
+
       const response = await axios.post(
         `${BACKEND_URL}/api/projects`,
         {
           userPrompt: promptValue.trim(),
+          template: selectedTemplate,
         },
         {
           headers: {
@@ -77,6 +88,9 @@ export default function HeroSection({ onOpenAuth }: HeroSectionProps = {}) {
       setIsLoading(false);
     }
   };
+
+  const quickSuggestions =
+    activeTab === "mobile" ? mobileQuickSuggestions : webQuickSuggestions;
 
   return (
     <section

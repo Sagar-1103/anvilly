@@ -39,11 +39,13 @@ export const getFileTree = AsyncHandler(async (req: Request, res: Response) => {
             `-not -path '*/.git/*' ` +
             `-not -path '*/.turbo/*' ` +
             `-not -path '*/.cache/*' ` +
+            `-not -path '*/.expo/*' ` +
             `-not -path '*/dist/*' ` +
             `-not -path '*/build/*' ` +
             `-not -name 'bun.lock' ` +
             `-not -name 'bun.lockb' ` +
             `-not -name 'package-lock.json' ` +
+            `-not -name '*.log' ` +
             `| sort; fi`,
             { cwd: "/home/user/app", timeoutMs: 10000 }
         );
@@ -96,7 +98,6 @@ export const readFileContent = AsyncHandler(async (req: Request, res: Response) 
         const sandbox = await Sandbox.connect(project.sandboxId);
         await sandbox.setTimeout(env.sandboxTimeoutMs);
 
-        // Sanitize path to prevent directory traversal
         const cleanPath = filePath.replace(/\\/g, "/").replace(/\.\.+/g, "");
         const targetPath = cleanPath.startsWith("/home/user/app/")
             ? cleanPath
