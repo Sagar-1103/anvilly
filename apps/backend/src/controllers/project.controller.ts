@@ -260,14 +260,19 @@ export const pingProject = AsyncHandler(async (req: Request, res: Response) => {
     try {
         const sandbox = await Sandbox.connect(project.sandboxId);
         if (project.template === "node-react-native-expo") {
-            const expoDetails = await ensureExpoRunning(sandbox, project.tunnelUrl);
-            tunnelUrl = expoDetails.tunnelUrl;
-            expoUrl = expoDetails.expoUrl;
-            url = expoDetails.tunnelUrl;
+            try {
+                const expoDetails = await ensureExpoRunning(sandbox, project.tunnelUrl);
+                tunnelUrl = expoDetails.tunnelUrl;
+                expoUrl = expoDetails.expoUrl;
+                url = expoDetails.tunnelUrl;
+            } catch (expoError) {
+                console.error("Expo services failed to start on existing sandbox:", expoError);
+            }
         } else {
             url = sandbox.getHost(3000);
         }
     } catch (error) {
+        console.error("Sandbox connect failed, recreating:", (error as Error).message);
         const templateToUse = project.template || "bun-react-shadcn";
         const sandbox = await Sandbox.create({
             template: templateToUse,
@@ -276,10 +281,14 @@ export const pingProject = AsyncHandler(async (req: Request, res: Response) => {
         });
 
         if (templateToUse === "node-react-native-expo") {
-            const expoDetails = await initializeExpoSandbox(sandbox);
-            tunnelUrl = expoDetails.tunnelUrl;
-            expoUrl = expoDetails.expoUrl;
-            url = expoDetails.tunnelUrl;
+            try {
+                const expoDetails = await initializeExpoSandbox(sandbox);
+                tunnelUrl = expoDetails.tunnelUrl;
+                expoUrl = expoDetails.expoUrl;
+                url = expoDetails.tunnelUrl;
+            } catch (expoError) {
+                console.error("Expo init failed on new sandbox:", expoError);
+            }
         } else {
             url = sandbox.getHost(3000);
         }
@@ -294,6 +303,7 @@ export const pingProject = AsyncHandler(async (req: Request, res: Response) => {
             },
         });
     }
+
 
     return res.status(201).json({ success: true, project, url, expoUrl, tunnelUrl, message: "Ping success" });
 });

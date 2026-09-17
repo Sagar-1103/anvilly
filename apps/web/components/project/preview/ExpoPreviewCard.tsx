@@ -6,10 +6,8 @@ import {
   Smartphone,
   Copy,
   Check,
-  ExternalLink,
   Wifi,
   Sparkles,
-  Info,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -40,106 +38,106 @@ export default function ExpoPreviewCard({
   };
 
   return (
-    <div className="w-full h-full flex flex-col items-center justify-between bg-zinc-950 text-white p-6 overflow-y-auto select-none">
-      {/* Top Mobile Bar: Simulated Dynamic Island & Status */}
-      <div className="w-full flex flex-col items-center gap-3">
-        <div className="w-24 h-4 bg-zinc-900 rounded-full border border-zinc-800/80 mx-auto" />
+    <div className="w-full h-full flex flex-col justify-between bg-zinc-950 text-white p-4 pt-3 pb-2 overflow-y-auto select-none relative">
+      {/* Subtle ambient glow in background */}
+      <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_50%_40%,rgba(99,102,241,0.08)_0%,transparent_65%)]" />
 
-        <div className="w-full flex items-center justify-between px-2 pt-1 text-xs">
-          <div className="flex items-center gap-1.5 font-mono text-[11px] text-zinc-400">
-            <Smartphone className="w-3.5 h-3.5 text-indigo-400" />
-            <span className="font-semibold text-zinc-200">Expo Go</span>
+      {/* Top Phone Status Bar: Time, Dynamic Island, Cellular / Wifi / Battery */}
+      <div className="w-full flex items-center justify-between px-2 pt-1 pb-2 z-10 shrink-0">
+        <span className="text-[12px] font-semibold tracking-tight text-zinc-300 w-12">
+          9:41
+        </span>
+
+        {/* Dynamic Island pill */}
+        <div className="w-20 h-4.5 bg-black rounded-full border border-zinc-800/90 flex items-center justify-end px-2 shadow-inner">
+          <div className="w-1.5 h-1.5 rounded-full bg-zinc-900 border border-zinc-800" />
+        </div>
+
+        {/* Status indicators */}
+        <div className="flex items-center gap-1.5 text-zinc-300 w-12 justify-end">
+          {/* Signal bars */}
+          <div className="flex items-end gap-[1.5px] h-2.5">
+            <span className="w-[2px] h-[3px] bg-zinc-300 rounded-[0.5px]" />
+            <span className="w-[2px] h-[5px] bg-zinc-300 rounded-[0.5px]" />
+            <span className="w-[2px] h-[7.5px] bg-zinc-300 rounded-[0.5px]" />
+            <span className="w-[2px] h-[10px] bg-zinc-300 rounded-[0.5px]" />
           </div>
-
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-950/70 border border-emerald-800/50 text-emerald-300">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              Fast Refresh
-            </span>
-            <Wifi className="w-3.5 h-3.5 text-zinc-500" />
+          {/* Wifi */}
+          <Wifi className="w-3 h-3 text-zinc-300" />
+          {/* Battery */}
+          <div className="flex items-center gap-[1px]">
+            <div className="w-4.5 h-2.2 border border-zinc-400 rounded-[3px] p-[1px] flex items-center">
+              <div className="h-full w-2.5 bg-zinc-200 rounded-[1px]" />
+            </div>
+            <div className="w-[1.5px] h-1 bg-zinc-400 rounded-r-[0.5px]" />
           </div>
         </div>
       </div>
 
-      {/* Main Content Area: QR Code Card */}
-      <div className="flex-1 w-full max-w-xs flex flex-col items-center justify-center my-4">
-        <div className="relative group w-full bg-linear-to-b from-zinc-900/90 to-zinc-950/90 border border-zinc-800/80 rounded-3xl p-6 shadow-2xl flex flex-col items-center text-center backdrop-blur-xl">
-          {/* Subtle glow behind QR */}
-          <div className="absolute inset-0 -z-10 bg-indigo-600/10 rounded-3xl blur-xl group-hover:bg-indigo-600/15 transition-all duration-500" />
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col items-center justify-center my-auto py-2 z-10 w-full max-w-[280px] mx-auto text-center">
+        {/* Expo Go Badge */}
+        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-zinc-900/90 border border-zinc-800 text-[11px] font-medium text-zinc-300 mb-3 shadow-xs">
+          <Smartphone className="w-3 h-3 text-indigo-400" />
+          <span>Expo Go Preview</span>
+        </div>
 
-          {/* QR Code Container */}
-          <div className="p-4 bg-white rounded-2xl shadow-lg border border-zinc-200/20 mb-4 flex items-center justify-center">
-            {targetUrl ? (
-              <QRCodeSVG
-                value={targetUrl}
-                size={180}
-                bgColor="#ffffff"
-                fgColor="#09090b"
-                level="M"
-              />
+        <h3 className="text-base font-semibold text-white tracking-tight mb-1 truncate max-w-full">
+          {projectTitle || "React Native App"}
+        </h3>
+        <p className="text-[12px] text-zinc-400 max-w-[240px] leading-relaxed mb-5">
+          Scan with your iPhone Camera or the Expo Go app on Android.
+        </p>
+
+        {/* QR Code Container */}
+        <div className="relative group p-4 bg-white rounded-2xl shadow-[0_12px_36px_rgba(0,0,0,0.6)] border border-white/20 mb-5 transition-transform duration-300 hover:scale-[1.02]">
+          {targetUrl ? (
+            <QRCodeSVG
+              value={targetUrl}
+              size={180}
+              bgColor="#ffffff"
+              fgColor="#09090b"
+              level="M"
+            />
+          ) : (
+            <div className="w-[180px] h-[180px] flex flex-col items-center justify-center text-zinc-600 text-xs gap-2">
+              <span className="w-6 h-6 border-2 border-zinc-400 border-t-zinc-800 rounded-full animate-spin" />
+              <span className="font-medium">Connecting...</span>
+            </div>
+          )}
+        </div>
+
+        {/* Action Controls */}
+        <div className="w-full flex flex-col items-center gap-2">
+          <button
+            onClick={handleCopyLink}
+            disabled={!targetUrl}
+            className="w-full max-w-[230px] flex items-center justify-center gap-2 py-2 px-4 bg-zinc-900 hover:bg-zinc-800 active:scale-[0.98] transition-all rounded-xl text-xs font-medium text-white border border-zinc-700/60 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shadow-xs"
+          >
+            {copied ? (
+              <>
+                <Check className="w-3.5 h-3.5 text-emerald-400" />
+                <span className="text-emerald-300">Link Copied!</span>
+              </>
             ) : (
-              <div className="w-[180px] h-[180px] flex flex-col items-center justify-center text-zinc-400 text-xs gap-2">
-                <span className="w-6 h-6 border-2 border-zinc-600 border-t-zinc-300 rounded-full animate-spin" />
-                <span>Generating QR...</span>
-              </div>
+              <>
+                <Copy className="w-3.5 h-3.5 text-zinc-400" />
+                <span>Copy Expo Link</span>
+              </>
             )}
-          </div>
+          </button>
 
-          <h3 className="text-sm font-semibold text-white tracking-tight mb-1">
-            {projectTitle || "React Native App"}
-          </h3>
-          <p className="text-[11px] text-zinc-400 max-w-[220px] leading-relaxed mb-4">
-            Scan with your iPhone Camera or the Expo Go app on Android.
-          </p>
-
-          {/* Action Buttons */}
-          <div className="w-full flex flex-col gap-2">
-            <button
-              onClick={handleCopyLink}
-              disabled={!targetUrl}
-              className="w-full flex items-center justify-center gap-2 py-2 px-3 bg-zinc-800/90 hover:bg-zinc-700/90 active:scale-[0.98] transition-all rounded-xl text-xs font-medium text-white border border-zinc-700/60 cursor-pointer disabled:opacity-50"
-            >
-              {copied ? (
-                <>
-                  <Check className="w-3.5 h-3.5 text-emerald-400" />
-                  <span className="text-emerald-300">Link Copied!</span>
-                </>
-              ) : (
-                <>
-                  <Copy className="w-3.5 h-3.5 text-zinc-300" />
-                  <span>Copy Expo Go Link</span>
-                </>
-              )}
-            </button>
-
-            {tunnelUrl && (
-              <a
-                href={tunnelUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="w-full flex items-center justify-center gap-1.5 py-1.5 px-3 text-[11px] text-zinc-400 hover:text-zinc-200 transition-colors"
-              >
-                <span>Open Metro Packager</span>
-                <ExternalLink className="w-3 h-3" />
-              </a>
-            )}
-          </div>
         </div>
       </div>
 
-      {/* Bottom Instructions / Guide */}
-      <div className="w-full max-w-xs bg-zinc-900/40 border border-zinc-800/50 rounded-2xl p-3 text-[11px] text-zinc-400 flex flex-col gap-1.5">
-        <div className="flex items-center gap-1.5 text-zinc-300 font-medium">
-          <Sparkles className="w-3 h-3 text-indigo-400" />
-          <span>Real-time Live Preview</span>
+      {/* Bottom Area: subtle note & iOS Home Indicator Bar */}
+      <div className="w-full flex flex-col items-center gap-2.5 z-10 shrink-0 pt-2 pb-1">
+        <div className="flex items-center gap-1 text-[11px] text-zinc-400">
+          <Sparkles className="w-3 h-3 text-indigo-400/80" />
+          <span>Live updates sync automatically</span>
         </div>
-        <div className="flex items-start gap-1.5 text-zinc-400 text-[10px] leading-normal">
-          <Info className="w-3 h-3 text-zinc-500 shrink-0 mt-0.5" />
-          <span>
-            Changes made in the editor or chat apply immediately to your phone
-            without needing to rescan.
-          </span>
-        </div>
+        {/* iOS Home Indicator */}
+        <div className="w-32 h-1 bg-zinc-600/70 rounded-full" />
       </div>
     </div>
   );
