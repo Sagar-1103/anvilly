@@ -22,7 +22,7 @@ export default function PreviewViewport({
   iframeRef: RefObject<HTMLIFrameElement | null>;
   sandboxFiles: SandboxFilesState;
 }) {
-  const isExpo = project?.template === "node-react-native-expo";
+  const isExpo = project?.template === "node_react_native_expo";
   const isMobileView = isExpo || device === "mobile";
 
   return (

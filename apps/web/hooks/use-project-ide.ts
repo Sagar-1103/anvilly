@@ -261,7 +261,7 @@ export function useProjectIDE(projectId: string, onFileChange?: (toolName: strin
           template,
         });
 
-        if (template === "node-react-native-expo") {
+        if (template === "node_react_native_expo") {
           setDevice("mobile");
         }
 

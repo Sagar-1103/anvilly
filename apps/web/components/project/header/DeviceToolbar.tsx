@@ -28,7 +28,7 @@ export default function DeviceToolbar({
     window.open(projectUrl, "_blank");
   };
 
-  const isExpo = template === "node-react-native-expo";
+  const isExpo = template === "node_react_native_expo";
 
   return (
     <div className="flex items-center gap-2">

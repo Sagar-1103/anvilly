@@ -27,7 +27,7 @@ export const createProject = AsyncHandler(async (req: Request, res: Response) =>
         return;
     }
 
-    const { userPrompt, template = "bun-react-shadcn" } = parsedBody.data;
+    const { userPrompt, template = "bun_react_shadcn" } = parsedBody.data;
 
     const titleText = await provider.generateText({
         model: "deepseek-flash",
@@ -37,7 +37,7 @@ export const createProject = AsyncHandler(async (req: Request, res: Response) =>
     let sandboxId = "";
     let tunnelUrl: string | undefined = undefined;
 
-    if (template === "node-react-native-expo") {
+    if (template === "node_react_native_expo") {
         const sandbox = await Sandbox.create({
             template: "node-react-native-expo",
             timeoutMs: env.sandboxTimeoutMs,
@@ -155,7 +155,7 @@ export const getProject = AsyncHandler(async (req: Request, res: Response) => {
         const sandbox = await Sandbox.connect(project.sandboxId);
         await sandbox.setTimeout(env.sandboxTimeoutMs);
 
-        if (project.template === "node-react-native-expo") {
+        if (project.template === "node_react_native_expo") {
             const expoDetails = await ensureExpoRunning(sandbox, project.tunnelUrl);
             tunnelUrl = expoDetails.tunnelUrl;
             expoUrl = expoDetails.expoUrl;
@@ -259,7 +259,7 @@ export const pingProject = AsyncHandler(async (req: Request, res: Response) => {
 
     try {
         const sandbox = await Sandbox.connect(project.sandboxId);
-        if (project.template === "node-react-native-expo") {
+        if (project.template === "node_react_native_expo") {
             try {
                 const expoDetails = await ensureExpoRunning(sandbox, project.tunnelUrl);
                 tunnelUrl = expoDetails.tunnelUrl;
@@ -273,14 +273,14 @@ export const pingProject = AsyncHandler(async (req: Request, res: Response) => {
         }
     } catch (error) {
         console.error("Sandbox connect failed, recreating:", (error as Error).message);
-        const templateToUse = project.template || "bun-react-shadcn";
+        const templateToUse = project.template || "bun_react_shadcn";
         const sandbox = await Sandbox.create({
             template: templateToUse,
             timeoutMs: env.sandboxTimeoutMs,
             lifecycle: { onTimeout: "pause", autoResume: false }
         });
 
-        if (templateToUse === "node-react-native-expo") {
+        if (templateToUse === "node_react_native_expo") {
             try {
                 const expoDetails = await initializeExpoSandbox(sandbox);
                 tunnelUrl = expoDetails.tunnelUrl;

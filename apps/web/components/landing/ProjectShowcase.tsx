@@ -91,8 +91,8 @@ export default function ProjectShowcase() {
 
   const filteredProjects = projects
     .filter((p) => {
-      if (activeTab === "Web Apps") return p.template !== "node-react-native-expo";
-      if (activeTab === "Mobile Apps") return p.template === "node-react-native-expo";
+      if (activeTab === "Web Apps") return p.template !== "node_react_native_expo";
+      if (activeTab === "Mobile Apps") return p.template === "node_react_native_expo";
 
       const titleStr = p.title || "Untitled Project";
       const promptStr = p.prompt || "";

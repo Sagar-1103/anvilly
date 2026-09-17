@@ -37,7 +37,7 @@ export default function ProjectCard({
   const router = useRouter();
   const title = project.title || "Untitled Project";
   const relativeTime = formatRelativeTime(project.updatedAt || project.createdAt);
-  const isMobile = project.template === "node-react-native-expo";
+  const isMobile = project.template === "node_react_native_expo";
 
   return (
     <div

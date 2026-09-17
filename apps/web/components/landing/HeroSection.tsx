@@ -60,7 +60,7 @@ export default function HeroSection({ onOpenAuth }: HeroSectionProps = {}) {
     setIsLoading(true);
     try {
       const selectedTemplate =
-        activeTab === "mobile" ? "node-react-native-expo" : "bun-react-shadcn";
+        activeTab === "mobile" ? "node_react_native_expo" : "bun_react_shadcn";
 
       const response = await axios.post(
         `${BACKEND_URL}/api/projects`,
