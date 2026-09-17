@@ -108,12 +108,6 @@ export default function ProjectShowcase() {
         new Date(a.createdAt || a.updatedAt).getTime()
     );
 
-  const userInitial =
-    session?.user?.name?.[0]?.toUpperCase() ||
-    session?.user?.email?.[0]?.toUpperCase() ||
-    "U";
-  const userName = session?.user?.name || session?.user?.email?.split("@")[0] || "You";
-
   return (
     <section id="projects" className="relative py-10 px-6 max-w-7xl mx-auto w-full">
       {/* 1. Header & Search Filter */}
@@ -138,8 +132,6 @@ export default function ProjectShowcase() {
               key={project.id}
               project={project}
               gradient={gradients[idx % gradients.length]}
-              userName={userName}
-              userInitial={userInitial}
               isMenuOpen={openMenuId === project.id}
               onToggleMenu={() =>
                 setOpenMenuId(openMenuId === project.id ? null : project.id)

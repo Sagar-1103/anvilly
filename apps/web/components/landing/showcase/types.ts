@@ -5,6 +5,7 @@ export interface BackendProject {
   sandboxId: string;
   template?: string;
   tunnelUrl?: string | null;
+  previewImage?: string | null;
   createdAt: string;
   updatedAt: string;
   userId: string;

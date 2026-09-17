@@ -8,6 +8,7 @@ import { toolHandlers, tools } from "./tools";
 import type Sandbox from "@e2b/code-interpreter";
 import { prisma } from "@repo/db/client";
 import { storeInRedis } from "./redis";
+import { captureProjectScreenshot } from "./screenshot";
 
 const DEEPSEEK_MODEL = "deepseek-flash";
 
@@ -75,4 +76,18 @@ export const agentLoop = async (eventStream: EventStream, userId:string, project
     await prisma.history.createMany({
         data: [...data]
     });
+
+    if (template !== "node-react-native-expo") {
+        try {
+            const host = sandbox.getHost(3000);
+            if (host) {
+                const targetUrl = "http://" + host;
+                captureProjectScreenshot(projectId, targetUrl).catch((err) => {
+                    console.log("Background screenshot error:", err);
+                });
+            }
+        } catch (e) {
+            
+        }
+    }
 }

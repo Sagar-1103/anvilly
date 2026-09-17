@@ -12,6 +12,7 @@ import { getTitleSystemPrompt } from "../utils/prompt";
 import type { Message } from "../utils/types";
 import { pendingQuestions } from "../utils/tools/qna";
 import { ensureExpoRunning, initializeExpoSandbox } from "../utils/e2b/expo-sandbox";
+import { captureProjectScreenshot } from "../utils/screenshot";
 
 export const createProject = AsyncHandler(async (req: Request, res: Response) => {
     const userId = getUserId(req);
@@ -168,6 +169,9 @@ export const getProject = AsyncHandler(async (req: Request, res: Response) => {
             }
         } else {
             url = "http://" + sandbox.getHost(3000);
+            if (!project.previewImage && url) {
+                captureProjectScreenshot(projectId, url).catch(() => {});
+            }
         }
     } catch (error) {
         console.error("Error connecting to sandbox in getProject:", error);
@@ -180,6 +184,7 @@ export const getProject = AsyncHandler(async (req: Request, res: Response) => {
         tunnelUrl,
         template: project.template,
         userPrompt: project.prompt,
+        previewImage: project.previewImage,
         messages,
     };
 

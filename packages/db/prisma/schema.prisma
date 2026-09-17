@@ -20,15 +20,21 @@ model User {
 model Project {
   id        String    @id @default(uuid())
   title     String?
-  prompt    String
-  sandboxId String
-  template  String    @default("bun-react-shadcn")
-  tunnelUrl String?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  userId    String
-  user      User      @relation(fields: [userId], references: [id])
-  history   History[]
+  prompt       String
+  sandboxId    String
+  template     Template  @default(bun_react_shadcn)
+  tunnelUrl    String?
+  previewImage String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  userId       String
+  user         User      @relation(fields: [userId], references: [id])
+  history      History[]
+}
+
+enum Template {
+  bun_react_shadcn       @map("bun-react-shadcn")
+  node_react_native_expo @map("node-react-native-expo")
 }
 
 enum HistoryType {

@@ -30,6 +30,7 @@
     "jsonwebtoken": "^9.0.3",
     "lucide-react": "^1.21.0",
     "openai": "^4.77.0",
+    "puppeteer": "^25.11.0",
     "redis": "^6.1.0",
     "zod": "^4.4.3"
   }
