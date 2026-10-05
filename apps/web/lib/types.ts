@@ -1,11 +1,13 @@
 export interface Project {
     id?: string;
     title: string;
+    description?: string | null;
     url: string;
     template?: string;
     expoUrl?: string;
     tunnelUrl?: string;
 }
+
 
 export interface QuestionPayload {
     questionId: string;

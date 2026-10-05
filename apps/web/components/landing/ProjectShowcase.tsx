@@ -95,9 +95,11 @@ export default function ProjectShowcase() {
       if (activeTab === "Mobile Apps") return p.template === "node_react_native_expo";
 
       const titleStr = p.title || "Untitled Project";
+      const descStr = p.description || "";
       const promptStr = p.prompt || "";
       const matchesSearch =
         titleStr.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        descStr.toLowerCase().includes(searchQuery.toLowerCase()) ||
         promptStr.toLowerCase().includes(searchQuery.toLowerCase());
 
       return matchesSearch;

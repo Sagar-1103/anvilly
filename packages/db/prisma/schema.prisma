@@ -18,8 +18,9 @@ model User {
 }
 
 model Project {
-  id        String    @id @default(uuid())
-  title     String?
+  id           String    @id @default(uuid())
+  title        String?
+  description  String?
   prompt       String
   sandboxId    String
   template     Template  @default(bun_react_shadcn)

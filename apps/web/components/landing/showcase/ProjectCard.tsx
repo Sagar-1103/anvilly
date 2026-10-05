@@ -163,8 +163,9 @@ export default function ProjectCard({
         </div>
 
         <p className="text-zinc-400 text-xs leading-relaxed line-clamp-2">
-          {project.prompt}
+          {project.description || project.prompt}
         </p>
+
       </div>
     </div>
   );

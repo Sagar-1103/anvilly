@@ -1,7 +1,7 @@
 "use client";
 
 import PlatformTabs from "./PlatformTabs";
-import SuggestionChips from "./SuggestionChips";
+import SuggestionChips, { SuggestionItem } from "./SuggestionChips";
 import GenerateButton from "./GenerateButton";
 
 interface PromptCardProps {
@@ -10,7 +10,7 @@ interface PromptCardProps {
   activeTab: "mobile" | "web";
   setActiveTab: (tab: "mobile" | "web") => void;
   isLoading: boolean;
-  quickSuggestions: string[];
+  quickSuggestions: (string | SuggestionItem)[];
   onSendPrompt: (e?: React.FormEvent | React.KeyboardEvent) => void;
 }
 
@@ -46,8 +46,8 @@ export default function PromptCard({
             disabled={isLoading}
             placeholder={
               activeTab === "mobile"
-                ? "Build a mobile fitness tracking app with daily goal rings and dark UI..."
-                : "Build a modern portfolio website with a dark theme and contact form..."
+                ? "Build a mobile habit tracker app with streak calendar and daily goals..."
+                : "Build a modern developer portfolio with an interactive project showcase..."
             }
             rows={3}
             className="w-full bg-transparent text-zinc-100 placeholder:text-zinc-600 text-sm sm:text-base px-2 py-1 resize-none focus:outline-none leading-relaxed disabled:opacity-60"
@@ -64,7 +64,17 @@ export default function PromptCard({
 
           {/* Bottom Action Bar */}
           <div className="flex items-center justify-between pt-3 mt-2 border-t border-zinc-800/40">
-            <div className="flex items-center gap-2" />
+            <div className="flex items-center gap-2">
+              {promptValue && (
+                <button
+                  type="button"
+                  onClick={() => setPromptValue("")}
+                  className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer px-1 py-0.5"
+                >
+                  Clear prompt
+                </button>
+              )}
+            </div>
 
             <GenerateButton
               isLoading={isLoading}
@@ -77,3 +87,4 @@ export default function PromptCard({
     </div>
   );
 }
+

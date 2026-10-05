@@ -122,6 +122,12 @@ export function useProjectIDE(projectId: string, onFileChange?: (toolName: strin
         body: JSON.stringify({ userPrompt }),
       });
 
+      if (!response.ok) {
+        toast.error("Failed to start project generation");
+        setBusy(false);
+        return;
+      }
+
       const reader = response.body?.getReader();
       if (!reader) {
         setBusy(false);
@@ -156,7 +162,6 @@ export function useProjectIDE(projectId: string, onFileChange?: (toolName: strin
               );
             }
           });
-          setBusy(false);
         },
         undefined,
         (questionData: any) => {
@@ -274,7 +279,7 @@ export function useProjectIDE(projectId: string, onFileChange?: (toolName: strin
         } else if (userPrompt && !initialPromptSentRef.current) {
           initialPromptSentRef.current = true;
           setMessages([{ id: "msg-0", role: "user", content: userPrompt }]);
-          await sendPrompt(userPrompt, true);
+          void sendPrompt(userPrompt, true);
         }
         setLoading(false);
       } else {

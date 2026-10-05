@@ -21,6 +21,7 @@ export const agentLoop = async (eventStream: EventStream, userId:string, project
     const messagesLength = messages.length;
 
     messages.push({ role: "USER",type:"TEXT",content: userPrompt });
+    await storeInRedis(key, messages);
 
     while (true) {
         // Convert internal messages to OpenAI-compatible ChatMessage format

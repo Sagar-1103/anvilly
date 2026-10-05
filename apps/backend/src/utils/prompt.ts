@@ -166,7 +166,7 @@ bun add <package-name>
 ### When to use it
 - **Upfront (before coding)**: Whenever a user gives you a new task that involves visual design, theme, layout, or feature scope — ask 1-2 targeted questions FIRST before writing any code.
 - **Mid-task**: If you encounter a design fork (e.g., should this be a modal or a page? dark or light? minimal or feature-rich?) — pause and ask.
-- **On ambiguous prompts**: Anything that could be interpreted multiple ways (e.g., "make it look nice", "add a dashboard", "build a landing page") — ask about style, color palette, or layout preference.
+- **On ambiguous prompts**: Anything that could be interpreted multiple ways (e.g., "make it look nice", "add a dashboard", "build a web app") — ask about style, color palette, or layout preference.
 
 ### Rules
 - Ask ONE question per \`qna_tool\` call — never bundle multiple decisions into one question
@@ -338,3 +338,47 @@ export const getTitleSystemPrompt = (userPrompt: string) => {
    Do not include quotes, markdown formatting, or prefix text. Just return the title itself.
    `;
 };
+
+export const getTitleAndDescriptionPrompt = (userPrompt: string) => {
+    return `
+You are naming and summarizing a coding project based on this user prompt:
+"${userPrompt}"
+
+Generate:
+1. title: A short, creative 3-5 word name for the project. Do not use generic words like "Project" or quotes.
+2. description: A very small, concise 1-sentence description (under 120 characters, around 10-15 words) explaining what the app does. It will be displayed on a project card.
+
+Respond ONLY with a valid JSON object in this exact format:
+{
+  "title": "...",
+  "description": "..."
+}
+Do not include any markdown formatting, backticks, or extra explanation.
+`;
+};
+
+export function parseTitleAndDescription(rawText: string, fallbackPrompt: string): { title: string; description: string } {
+    try {
+        const cleaned = rawText.replace(/```(?:json)?/gi, "").replace(/```/g, "").trim();
+        const jsonStart = cleaned.indexOf("{");
+        const jsonEnd = cleaned.lastIndexOf("}");
+        if (jsonStart !== -1 && jsonEnd !== -1) {
+            const parsed = JSON.parse(cleaned.slice(jsonStart, jsonEnd + 1));
+            const title = typeof parsed.title === "string" && parsed.title.trim()
+                ? parsed.title.replace(/^["']|["']$/g, "").trim()
+                : "Untitled Project";
+            const description = typeof parsed.description === "string" && parsed.description.trim()
+                ? parsed.description.replace(/^["']|["']$/g, "").trim()
+                : fallbackPrompt.slice(0, 100).trim();
+            return { title, description };
+        }
+    } catch (e) {
+        console.warn("Failed to parse title and description JSON from LLM output:", e);
+    }
+
+    const firstLine = rawText.split("\n")[0]?.trim() || "";
+    return {
+        title: firstLine.slice(0, 40) || "Untitled Project",
+        description: fallbackPrompt.slice(0, 100).trim(),
+    };
+}

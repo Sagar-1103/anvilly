@@ -1,6 +1,7 @@
 export interface BackendProject {
   id: string;
   title: string | null;
+  description?: string | null;
   prompt: string;
   sandboxId: string;
   template?: string;

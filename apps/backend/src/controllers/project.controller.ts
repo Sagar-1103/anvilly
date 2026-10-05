@@ -8,7 +8,7 @@ import Sandbox from "@e2b/code-interpreter";
 import { agentLoop } from "../utils/agent-loop";
 import { provider } from "../providers";
 import { EventStream } from "../utils/event-stream";
-import { getTitleSystemPrompt } from "../utils/prompt";
+import { getTitleAndDescriptionPrompt, parseTitleAndDescription } from "../utils/prompt";
 import type { Message } from "../utils/types";
 import { pendingQuestions } from "../utils/tools/qna";
 import { ensureExpoRunning, initializeExpoSandbox } from "../utils/e2b/expo-sandbox";
@@ -29,10 +29,20 @@ export const createProject = AsyncHandler(async (req: Request, res: Response) =>
 
     const { userPrompt, template = "bun_react_shadcn" } = parsedBody.data;
 
-    const titleText = await provider.generateText({
-        model: "deepseek-flash",
-        prompt: getTitleSystemPrompt(userPrompt), 
-    });
+    let title = "Untitled Project";
+    let description = userPrompt.slice(0, 100).trim();
+
+    try {
+        const titleAndDescRaw = await provider.generateText({
+            model: "deepseek-flash",
+            prompt: getTitleAndDescriptionPrompt(userPrompt),
+        });
+        const parsed = parseTitleAndDescription(titleAndDescRaw, userPrompt);
+        title = parsed.title;
+        description = parsed.description;
+    } catch (e) {
+        console.error("Error generating title and description:", e);
+    }
 
     let sandboxId = "";
     let tunnelUrl: string | undefined = undefined;
@@ -64,7 +74,8 @@ export const createProject = AsyncHandler(async (req: Request, res: Response) =>
         data: {
             sandboxId,
             prompt: userPrompt,
-            title: titleText || "Untitled Project",
+            title,
+            description,
             template,
             tunnelUrl,
             userId,
@@ -73,6 +84,7 @@ export const createProject = AsyncHandler(async (req: Request, res: Response) =>
 
     return res.status(201).json({success:true,project,message:"Project created successfully"});
 });
+
 
 export const updateProject = AsyncHandler(async(req:Request,res:Response) => {
     const userId = getUserId(req);
@@ -179,6 +191,7 @@ export const getProject = AsyncHandler(async (req: Request, res: Response) => {
 
     const data = {
         title: project.title,
+        description: project.description,
         url,
         expoUrl,
         tunnelUrl,
