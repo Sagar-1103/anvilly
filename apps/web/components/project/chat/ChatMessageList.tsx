@@ -78,6 +78,9 @@ export default function ChatMessageList({
   const lastGroupedItem = groupedItems[groupedItems.length - 1];
   const lastItemIsActionGroup =
     lastGroupedItem && "type" in lastGroupedItem && lastGroupedItem.type === "action-group";
+  const hasPendingQuestion = messages.some(
+    (m) => m.role === "question" && !m.answered
+  );
 
   return (
     <SidebarContent className="p-0! flex-1 overflow-hidden">
@@ -119,8 +122,8 @@ export default function ChatMessageList({
           );
         })}
 
-        {/* Only show ThinkingIndicator if the model is busy and not actively executing an action group */}
-        {busy && !lastItemIsActionGroup && <ThinkingIndicator thought={liveThought} />}
+        {/* Only show ThinkingIndicator if the model is busy, not executing an action group, and not waiting on a pending question */}
+        {busy && !lastItemIsActionGroup && !hasPendingQuestion && <ThinkingIndicator thought={liveThought} />}
       </div>
     </SidebarContent>
   );

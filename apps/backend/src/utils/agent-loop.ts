@@ -42,21 +42,63 @@ export const agentLoop = async (eventStream: EventStream, userId:string, project
 
         let calledTool = false;
 
-        for (const toolCall of response.toolCalls) {
+        const qnaCalls = response.toolCalls.filter((t) => t.name === "qna_tool");
+        const otherCalls = response.toolCalls.filter((t) => t.name !== "qna_tool");
+
+        if (qnaCalls.length > 0) {
+            calledTool = true;
+            const qnaResults = await Promise.all(
+                qnaCalls.map(async (toolCall) => {
+                    eventStream.send("tool_call", { name: toolCall.name, arguments: toolCall.arguments });
+                    const result = await (toolHandlers as any)["qna_tool"](
+                        sandbox,
+                        eventStream,
+                        toolCall.arguments,
+                        { userId, projectId }
+                    );
+                    eventStream.send("tool_call_end", { name: toolCall.name });
+                    console.log(toolCall.name, " | ", JSON.stringify(toolCall.arguments), " | ", toolCall);
+                    return { toolCall, result };
+                })
+            );
+
+            for (const item of qnaResults) {
+                messages.push({
+                    role: "AI",
+                    type: "TOOL_CALL",
+                    name: item.toolCall.name,
+                    callId: item.toolCall.id,
+                    arguments: item.toolCall.arguments,
+                    result: item.result,
+                    reasoning_content: response.reasoning_content,
+                });
+            }
+            await storeInRedis(key, messages);
+        }
+
+        for (const toolCall of otherCalls) {
             calledTool = true;
             const handler = (toolHandlers as any)[toolCall.name];
 
             if (!handler) {
-                messages.push({ role: "AI",type:"TEXT", content: `Tool ${toolCall.name} not found` });
-                await storeInRedis(key,messages)
+                messages.push({ role: "AI", type: "TEXT", content: `Tool ${toolCall.name} not found` });
+                await storeInRedis(key, messages);
                 continue;
             }
             eventStream.send("tool_call", { name: toolCall.name, arguments: toolCall.arguments });
-            const result = await handler(sandbox, eventStream, toolCall.arguments);
+            const result = await handler(sandbox, eventStream, toolCall.arguments, { userId, projectId });
             eventStream.send("tool_call_end", { name: toolCall.name });
             console.log(toolCall.name, " | ", JSON.stringify(toolCall.arguments), " | ", toolCall);
-            messages.push({ role: "AI",type:"TOOL_CALL", name: toolCall.name, callId: toolCall.id, arguments: toolCall.arguments, result, reasoning_content: response.reasoning_content });
-            await storeInRedis(key,messages)
+            messages.push({
+                role: "AI",
+                type: "TOOL_CALL",
+                name: toolCall.name,
+                callId: toolCall.id,
+                arguments: toolCall.arguments,
+                result,
+                reasoning_content: response.reasoning_content,
+            });
+            await storeInRedis(key, messages);
         }
 
         if (!calledTool) {

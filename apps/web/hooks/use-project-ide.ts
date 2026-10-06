@@ -84,6 +84,8 @@ function extractTextChatMessage(m: any, idx: number): ChatMessage | null {
           questionData: {
             questionId: `history-${idx}`,
             question: args.question,
+            options: args.options,
+            recommended: args.recommended,
           },
           answered: true,
           selectedAnswer: result,
@@ -210,6 +212,7 @@ export function useProjectIDE(projectId: string, onFileChange?: (toolName: strin
         (toolData: any) => {
           setLiveThought("");
           if (!toolData?.name) return;
+          if (toolData.name === "qna_tool") return;
           const actionId = `action-${Date.now()}-${Math.random()}`;
           setMessages((prev) => [
             ...prev,

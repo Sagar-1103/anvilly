@@ -30,10 +30,13 @@ export const qnaTool: ToolDefinition = {
     },
 };
 
-interface PendingQuestion {
+export interface PendingQuestion {
     resolve: (answer: string) => void;
     timeoutId: ReturnType<typeof setTimeout>;
+    pingIntervalId?: ReturnType<typeof setInterval>;
     fallbackResponse: string;
+    userId?: string;
+    projectId?: string;
 }
 
 export const pendingQuestions = new Map<string, PendingQuestion>();
@@ -41,17 +44,18 @@ export const pendingQuestions = new Map<string, PendingQuestion>();
 export const qnaToolHandler = async (
     sandbox: Sandbox,
     eventStream: EventStream,
-    args: { question: string; options?: string[]; recommended?: number }
-) => {
+    args: { question: string; options?: string[]; recommended?: number },
+    context?: { userId?: string; projectId?: string }
+): Promise<string | { error: string }> => {
     try {
         const questionId = crypto.randomUUID();
         const { question, options, recommended } = args;
 
-        let selectedAnswer = "User specified no preference, proceed with best design judgment";
+        let fallbackResponse = "User specified no preference, proceed with best design judgment";
         if (options && typeof recommended === "number" && options[recommended]) {
-            selectedAnswer = options[recommended];
+            fallbackResponse = options[recommended];
         } else if (options && options.length > 0 && options[0]) {
-            selectedAnswer = options[0];
+            fallbackResponse = options[0];
         }
 
         eventStream.send("question", {
@@ -59,13 +63,45 @@ export const qnaToolHandler = async (
             question,
             options,
             recommended,
-            answered: true,
-            selectedAnswer,
+            answered: false,
         });
 
-        return selectedAnswer;
+        return new Promise<string>((resolve) => {
+            const pingIntervalId = setInterval(() => {
+                eventStream.sendPing();
+            }, 15000);
+
+            const timeoutId = setTimeout(() => {
+                cleanupAndResolve(fallbackResponse);
+            }, 5 * 60 * 1000);
+
+            const cleanupAndResolve = (answer: string) => {
+                clearInterval(pingIntervalId);
+                clearTimeout(timeoutId);
+                eventStream.req.off("close", onClose);
+                if (pendingQuestions.has(questionId)) {
+                    pendingQuestions.delete(questionId);
+                }
+                resolve(answer);
+            };
+
+            const onClose = () => {
+                cleanupAndResolve(fallbackResponse);
+            };
+
+            eventStream.req.once("close", onClose);
+
+            pendingQuestions.set(questionId, {
+                resolve: cleanupAndResolve,
+                timeoutId,
+                pingIntervalId,
+                fallbackResponse,
+                userId: context?.userId,
+                projectId: context?.projectId,
+            });
+        });
     } catch (error) {
-        console.error(error);
+        console.error("Error in qnaToolHandler:", error);
         return { error: (error as Error).message };
     }
-}
+};

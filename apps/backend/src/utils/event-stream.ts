@@ -19,6 +19,15 @@ export class EventStream {
         this.res.setHeader("Connection","keep-alive");
         this.res.flushHeaders();
         this.isConnected = true;
+
+        this.req.on("close", () => {
+            this.isConnected = false;
+        });
+    }
+
+    sendPing() {
+        if (!this.isConnected) return;
+        this.res.write(": keep-alive\n\n");
     }
 
     send(event: EventType,data:any) {

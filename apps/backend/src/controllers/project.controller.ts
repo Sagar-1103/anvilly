@@ -237,8 +237,10 @@ export const answerQuestion = AsyncHandler(async(req:Request,res:Response) => {
         return res.status(404).json({ success: false, message: "Question timed out or not found" });
     }
 
-    clearTimeout(pending.timeoutId);
-    pendingQuestions.delete(questionId);
+    const userId = getUserId(req);
+    if (pending.userId && userId && pending.userId !== userId) {
+        return res.status(403).json({ success: false, message: "Unauthorized to answer this question" });
+    }
 
     pending.resolve(answer);
 
