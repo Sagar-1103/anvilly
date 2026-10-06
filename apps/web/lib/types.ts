@@ -18,12 +18,15 @@ export interface QuestionPayload {
 
 export interface ChatMessage {
     id: string;
-    role: "user" | "assistant" | "question";
+    role: "user" | "assistant" | "question" | "action";
     content: string;
     questionData?: QuestionPayload;
     answered?: boolean;
     selectedAnswer?: string;
     createdAt?: string;
+    actionType?: string;
+    actionArgs?: any;
+    actionDone?: boolean;
 }
 
 export interface SandboxFile {

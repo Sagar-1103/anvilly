@@ -27,6 +27,7 @@ export default function ProjectIDEPage({
     project,
     messages,
     busy,
+    liveThought,
     iframeRef,
     reloadProjectLink,
     sendPrompt,
@@ -105,6 +106,7 @@ export default function ProjectIDEPage({
           project={project}
           messages={messages}
           busy={busy}
+          liveThought={liveThought}
           sendPrompt={(promptText) => sendPrompt(promptText, false)}
           onAnswerSubmit={handleAnswerSubmit}
         />

@@ -11,6 +11,7 @@ interface ChatSidebarProps {
   project: Project;
   messages: ChatMessage[];
   busy: boolean;
+  liveThought?: string;
   sendPrompt: (userPrompt: string) => Promise<void>;
   onAnswerSubmit?: (questionId: string, answer: string) => Promise<void>;
 }
@@ -19,6 +20,7 @@ export default function ChatSidebar({
   project,
   messages,
   busy,
+  liveThought,
   sendPrompt,
   onAnswerSubmit,
 }: ChatSidebarProps) {
@@ -41,6 +43,7 @@ export default function ChatSidebar({
       <ChatMessageList
         messages={messages}
         busy={busy}
+        liveThought={liveThought}
         onAnswerSubmit={onAnswerSubmit}
       />
 

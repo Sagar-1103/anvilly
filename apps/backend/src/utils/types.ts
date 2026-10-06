@@ -29,4 +29,4 @@ export interface AiToolCallMessage {
 
 export type Message = UserMessage | AiTextMessage | AiToolCallMessage;
 
-export type EventType = "project" | "question" | "text" | "tool_call" | "restart_project";
+export type EventType = "project" | "question" | "text" | "tool_call" | "tool_call_end" | "restart_project" | "done";

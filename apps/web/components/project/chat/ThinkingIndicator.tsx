@@ -1,13 +1,18 @@
 "use client";
 
-export default function ThinkingIndicator() {
+import { Loader2 } from "lucide-react";
+
+interface ThinkingIndicatorProps {
+  thought?: string;
+}
+
+export default function ThinkingIndicator({ thought }: ThinkingIndicatorProps) {
   return (
-    <div className="flex items-center gap-2 text-zinc-400 text-[12px] font-mono py-2 bg-zinc-950/40 px-3 rounded-xl border border-white/5 w-fit">
-      <span className="relative flex h-2 w-2">
-        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
-        <span className="inline-flex rounded-full h-2 w-2 bg-white" />
+    <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-lg bg-white/[0.03] border border-white/6 text-zinc-400 text-[12.5px] select-none w-fit my-1.5">
+      <Loader2 className="w-3.5 h-3.5 animate-spin text-zinc-500 shrink-0" />
+      <span className="font-medium truncate max-w-[280px]">
+        {thought ? thought : "Thinking..."}
       </span>
-      Anvilly is thinking...
     </div>
   );
 }

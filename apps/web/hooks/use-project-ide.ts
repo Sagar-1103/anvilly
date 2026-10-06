@@ -8,6 +8,40 @@ import { BACKEND_URL } from "@/lib/config";
 import { processStream } from "@/lib/event-stream";
 import { ChatMessage, Project } from "@/lib/types";
 
+function getActionLabel(toolName: string, args: any): string {
+  const cleanTool = String(toolName || "").toLowerCase();
+  const location = args?.location || args?.path || args?.filePath || "";
+  const shortPath = location.replace(/^\/home\/user\/app\//, "").replace(/^\//, "");
+  
+  switch (cleanTool) {
+    case "write_file_tool":
+    case "create_file_tool":
+    case "update_file_tool":
+      return shortPath ? `Writing ${shortPath}` : "Writing file";
+    case "read_file_tool":
+      return shortPath ? `Reading ${shortPath}` : "Reading file";
+    case "delete_file_tool":
+      return shortPath ? `Deleting ${shortPath}` : "Deleting file";
+    case "bash_tool": {
+      const cmd = (args?.command || "").trim();
+      return cmd ? `Running ${cmd.slice(0, 60)}` : "Running command";
+    }
+    case "build_project_tool":
+      return "Building project";
+    case "run_project_tool":
+      return "Restarting dev server";
+    case "qna_tool":
+      return "Asking a question";
+    default: {
+      const readable = cleanTool.replace(/_tool$/i, "").replace(/_/g, " ").trim();
+      if (readable) {
+        return `Running ${readable}`;
+      }
+      return shortPath ? `Updating ${shortPath}` : "Executing action";
+    }
+  }
+}
+
 function extractTextChatMessage(m: any, idx: number): ChatMessage | null {
   if (!m) return null;
 
@@ -18,11 +52,30 @@ function extractTextChatMessage(m: any, idx: number): ChatMessage | null {
   if (!isUser && !isAI) return null;
 
   const typeStr = String(m.type || "").toUpperCase();
+  const toolName = String(m.name || m.toolCall || m.tool_call || "").toLowerCase();
 
-  if (typeStr === "TOOL_CALL" && String(m.toolCall || "").toUpperCase() === "QNA_TOOL") {
-    try {
-      const parsed = JSON.parse(m.content || "{}");
-      const { arguments: args, result } = parsed;
+  if (typeStr === "TOOL_CALL" || toolName) {
+    let args = m.arguments || m.args;
+    let result = m.result;
+
+    if (!args && typeof m.content === "string") {
+      try {
+        const parsed = JSON.parse(m.content);
+        args = parsed?.arguments || parsed?.args || parsed;
+        result = parsed?.result ?? result;
+      } catch {}
+    } else if (!args && m.content && typeof m.content === "object") {
+      args = m.content.arguments || m.content.args || m.content;
+      result = m.content.result ?? result;
+    }
+
+    if (typeof args === "string") {
+      try {
+        args = JSON.parse(args);
+      } catch {}
+    }
+
+    if (toolName === "qna_tool") {
       if (args?.question && typeof result === "string") {
         return {
           id: `msg-${idx}-${Date.now()}`,
@@ -36,13 +89,19 @@ function extractTextChatMessage(m: any, idx: number): ChatMessage | null {
           selectedAnswer: result,
         };
       }
-    } catch {
-      // malformed, skip
+      return null;
     }
-    return null;
-  }
 
-  if (typeStr === "TOOL_CALL") return null;
+    const resolvedToolName = toolName || "action";
+    return {
+      id: `msg-${idx}-${Date.now()}`,
+      role: "action",
+      content: getActionLabel(resolvedToolName, args),
+      actionType: resolvedToolName,
+      actionArgs: args,
+      actionDone: true,
+    };
+  }
 
   let contentStr = "";
   if (typeof m.content === "string") {
@@ -75,6 +134,7 @@ export function useProjectIDE(projectId: string, onFileChange?: (toolName: strin
   const [project, setProject] = useState<Project>({ title: "", url: "" });
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [busy, setBusy] = useState(false);
+  const [liveThought, setLiveThought] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<{ message: string; statusCode?: number } | null>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -101,6 +161,7 @@ export function useProjectIDE(projectId: string, onFileChange?: (toolName: strin
     if (!userPrompt.trim() || busy) return;
 
     setBusy(true);
+    setLiveThought("");
 
     if (!alreadyAddedInState) {
       setMessages((prev) => [
@@ -109,8 +170,7 @@ export function useProjectIDE(projectId: string, onFileChange?: (toolName: strin
       ]);
     }
 
-    const assistantMsgId = `assistant-${Date.now()}`;
-    let assistantAdded = false;
+    let latestText = "";
 
     try {
       const response = await fetch(`${BACKEND_URL}/api/projects/${projectId}`, {
@@ -125,12 +185,14 @@ export function useProjectIDE(projectId: string, onFileChange?: (toolName: strin
       if (!response.ok) {
         toast.error("Failed to start project generation");
         setBusy(false);
+        setLiveThought("");
         return;
       }
 
       const reader = response.body?.getReader();
       if (!reader) {
         setBusy(false);
+        setLiveThought("");
         return;
       }
 
@@ -138,32 +200,36 @@ export function useProjectIDE(projectId: string, onFileChange?: (toolName: strin
         reader,
         reloadProjectLink,
         (textChunk: string) => {
-          if (!textChunk || typeof textChunk !== "string") return;
-          const cleanChunk = textChunk.trim();
-          if (!cleanChunk) return;
-
-          setMessages((prev) => {
-            if (!assistantAdded) {
-              assistantAdded = true;
-              return [
-                ...prev,
-                { id: assistantMsgId, role: "assistant", content: cleanChunk },
-              ];
-            } else {
-              return prev.map((m) =>
-                m.id === assistantMsgId
-                  ? {
-                      ...m,
-                      content: m.content
-                        ? m.content + "\n\n" + cleanChunk
-                        : cleanChunk,
-                    }
-                  : m
-              );
-            }
-          });
+          if (!textChunk?.trim()) return;
+          latestText = textChunk.trim();
+          const clean = textChunk.trim();
+          if (!clean.startsWith("{") && !clean.startsWith("[")) {
+            setLiveThought(clean.slice(0, 120));
+          }
         },
-        undefined,
+        (toolData: any) => {
+          setLiveThought("");
+          if (!toolData?.name) return;
+          const actionId = `action-${Date.now()}-${Math.random()}`;
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: actionId,
+              role: "action",
+              content: getActionLabel(toolData.name, toolData.arguments),
+              actionType: toolData.name,
+              actionArgs: toolData.arguments,
+              actionDone: false,
+            },
+          ]);
+
+          if (
+            toolData.name === "write_file_tool" ||
+            toolData.name === "delete_file_tool"
+          ) {
+            onFileChangeRef.current?.(toolData.name, toolData.arguments || {});
+          }
+        },
         (questionData: any) => {
           if (!questionData || !questionData.questionId) return;
           setMessages((prev) => {
@@ -184,12 +250,45 @@ export function useProjectIDE(projectId: string, onFileChange?: (toolName: strin
             ];
           });
         },
-        (toolName: string, args: any) => onFileChangeRef.current?.(toolName, args),
+        undefined,
+        (data: { name: string }) => {
+          setMessages((prev) => {
+            const idx = [...prev].reverse().findIndex(
+              (m) => m.role === "action" && m.actionType === data.name && !m.actionDone
+            );
+            if (idx === -1) return prev;
+            const realIdx = prev.length - 1 - idx;
+            const updated = [...prev];
+            updated[realIdx] = { ...updated[realIdx], actionDone: true };
+            return updated;
+          });
+        },
+        () => {
+          setLiveThought("");
+          setMessages((prev) => {
+            const resolved = prev.map((m) =>
+              m.role === "action" && !m.actionDone ? { ...m, actionDone: true } : m
+            );
+            if (latestText) {
+              return [
+                ...resolved,
+                { id: `assistant-${Date.now()}`, role: "assistant", content: latestText },
+              ];
+            }
+            return resolved;
+          });
+        }
       );
     } catch (error) {
       console.error("Error in sendPrompt stream:", error);
     } finally {
       setBusy(false);
+      setLiveThought("");
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.role === "action" && !m.actionDone ? { ...m, actionDone: true } : m
+        )
+      );
     }
   };
 
@@ -270,9 +369,26 @@ export function useProjectIDE(projectId: string, onFileChange?: (toolName: strin
           setDevice("mobile");
         }
 
-        const chatMsgs: ChatMessage[] = (backendMessages || [])
+        let chatMsgs: ChatMessage[] = (backendMessages || [])
           .map((m: any, idx: number) => extractTextChatMessage(m, idx))
           .filter(Boolean) as ChatMessage[];
+          
+        // Post-process history: Keep only the LAST AI TEXT message to avoid huge text walls
+        // We iterate backwards to find the last assistant message
+        let lastAssistantMsgIndex = -1;
+        for (let i = chatMsgs.length - 1; i >= 0; i--) {
+            if (chatMsgs[i].role === "assistant") {
+                lastAssistantMsgIndex = i;
+                break;
+            }
+        }
+        
+        chatMsgs = chatMsgs.filter((msg, idx) => {
+            if (msg.role === "assistant") {
+                return idx === lastAssistantMsgIndex;
+            }
+            return true;
+        });
 
         if (chatMsgs.length > 0) {
           setMessages(chatMsgs);
@@ -330,6 +446,7 @@ export function useProjectIDE(projectId: string, onFileChange?: (toolName: strin
     project,
     messages,
     busy,
+    liveThought,
     iframeRef,
     reloadProjectLink,
     sendPrompt,

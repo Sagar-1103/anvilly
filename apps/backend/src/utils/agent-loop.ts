@@ -53,6 +53,7 @@ export const agentLoop = async (eventStream: EventStream, userId:string, project
             }
             eventStream.send("tool_call", { name: toolCall.name, arguments: toolCall.arguments });
             const result = await handler(sandbox, eventStream, toolCall.arguments);
+            eventStream.send("tool_call_end", { name: toolCall.name });
             console.log(toolCall.name, " | ", JSON.stringify(toolCall.arguments), " | ", toolCall);
             messages.push({ role: "AI",type:"TOOL_CALL", name: toolCall.name, callId: toolCall.id, arguments: toolCall.arguments, result, reasoning_content: response.reasoning_content });
             await storeInRedis(key,messages)
@@ -62,6 +63,7 @@ export const agentLoop = async (eventStream: EventStream, userId:string, project
             break;
         }
     }
+    eventStream.send("done", {});
     const newMessages = messages.slice(messagesLength);
     const data = newMessages.map((message)=>{
 

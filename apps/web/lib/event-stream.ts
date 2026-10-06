@@ -6,6 +6,8 @@ export const processStream = async (
   onToolCall?: (toolData: any) => void,
   onQuestion?: (questionData: any) => void,
   onFileChange?: (toolName: string, args: any) => void,
+  onToolCallEnd?: (data: { name: string }) => void,
+  onDone?: () => void,
 ) => {
     const decoder = new TextDecoder("utf-8");
     let buffer = "";
@@ -25,7 +27,6 @@ export const processStream = async (
             const eventName = eventMatch ? eventMatch[1].trim() : "text";
             try {
               const data = JSON.parse(dataMatch[1]);
-              console.log(eventName, data);
 
               if (eventName === "text" && onText) {
                 const textContent = typeof data === "string" ? data : (data.content || data.text || JSON.stringify(data));
@@ -49,12 +50,23 @@ export const processStream = async (
                 }
               }
 
+              if (eventName === "tool_call_end" && onToolCallEnd) {
+                onToolCallEnd(data);
+              }
+
               if (eventName === "question" && onQuestion) {
                 onQuestion(data);
               }
 
               if (eventName === "restart_project") {
                 reloadProjectLink();
+              }
+
+              if (eventName === "done") {
+                if (onDone) {
+                  onDone();
+                }
+                return; // Break out of processStream entirely
               }
 
             } catch (err) {

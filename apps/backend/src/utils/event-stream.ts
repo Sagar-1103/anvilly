@@ -31,10 +31,8 @@ export class EventStream {
     }
 
     end() {
-        this.req.on("close",()=>{
-            this.isConnected = false;            
-            this.res.end();
-        })
+        this.isConnected = false;
+        this.res.end();
     }
 
 }
