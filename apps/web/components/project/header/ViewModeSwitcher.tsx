@@ -12,7 +12,7 @@ export default function ViewModeSwitcher({
   setActiveTab,
 }: ViewModeSwitcherProps) {
   return (
-    <div className="flex p-0.5 rounded-lg bg-white/4 border border-white/6">
+    <div className="flex p-0.5 rounded-lg bg-[#242428] border border-[#35353c]">
       {(["preview", "code"] as const).map((v) => (
         <button
           key={v}
@@ -20,8 +20,8 @@ export default function ViewModeSwitcher({
           onClick={() => setActiveTab(v)}
           className={`px-2.5 cursor-pointer py-1 rounded-md text-[11px] font-semibold capitalize flex items-center gap-1.5 transition-all ${
             activeTab === v
-              ? "bg-white/8 text-white"
-              : "text-zinc-500 hover:text-zinc-300"
+              ? "bg-[#34343a] text-white shadow-xs"
+              : "text-zinc-400 hover:text-zinc-200"
           }`}
         >
           {v === "preview" ? (

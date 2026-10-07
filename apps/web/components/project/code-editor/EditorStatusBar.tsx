@@ -12,7 +12,7 @@ export default function EditorStatusBar({
   lineCount,
 }: EditorStatusBarProps) {
   return (
-    <div className="h-6 bg-[#0f0f12] border-t border-white/6 px-3 flex items-center justify-between text-[11px] font-mono text-zinc-500 shrink-0 select-none">
+    <div className="h-6 bg-[#18181b] border-t border-[#27272b] px-3 flex items-center justify-between text-[11px] font-mono text-zinc-400 shrink-0 select-none">
       <div className="flex items-center gap-4">
         <span className="flex items-center gap-1.5 text-zinc-400">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />

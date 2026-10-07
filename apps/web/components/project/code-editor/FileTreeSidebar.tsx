@@ -108,11 +108,11 @@ export default function FileTreeSidebar({
   onSelectFile,
 }: FileTreeSidebarProps) {
   return (
-    <aside className="w-60 shrink-0 h-full bg-[#0a0a0d] border-r border-white/6 flex flex-col select-none overflow-hidden">
+    <aside className="w-60 shrink-0 h-full bg-[#18181b] border-r border-[#27272b] flex flex-col select-none overflow-hidden">
       {/* Header */}
-      <div className="h-9 px-3.5 border-b border-white/6 flex items-center justify-between shrink-0 bg-black/40">
-        <span className="text-[11px] font-mono uppercase tracking-wider text-zinc-400 font-semibold flex items-center gap-1.5">
-          <Code className="w-3.5 h-3.5 text-zinc-500" />
+      <div className="h-9 px-3.5 border-b border-[#27272b] flex items-center justify-between shrink-0 bg-[#1c1c20]">
+        <span className="text-[11px] font-mono uppercase tracking-wider text-zinc-300 font-semibold flex items-center gap-1.5">
+          <Code className="w-3.5 h-3.5 text-zinc-400" />
           Explorer
         </span>
       </div>

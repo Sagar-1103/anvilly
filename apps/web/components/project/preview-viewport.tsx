@@ -26,11 +26,11 @@ export default function PreviewViewport({
   const isMobileView = isExpo || device === "mobile";
 
   return (
-    <div className="flex-1 overflow-auto bg-[#111113] relative flex items-center justify-center p-4">
+    <div className="flex-1 overflow-auto bg-[#151518] relative flex items-center justify-center p-4">
       {activeTab === "preview" ? (
         isMobileView ? (
           /* Sleek Phone Mockup Frame */
-          <div className="relative w-[380px] max-w-full h-[740px] max-h-[94%] rounded-[48px] p-2.5 bg-zinc-900 border border-zinc-700/60 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9),0_0_0_1px_rgba(255,255,255,0.08)] flex flex-col shrink-0 transition-all duration-300 select-none">
+          <div className="relative w-[380px] max-w-full h-[740px] max-h-[94%] rounded-[48px] p-2.5 bg-[#242429] border border-[#35353d] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9),0_0_0_1px_rgba(255,255,255,0.08)] flex flex-col shrink-0 transition-all duration-300 select-none">
             {/* Side button accents */}
             <div className="absolute -left-[3px] top-24 w-[3px] h-7 bg-zinc-700/80 rounded-l-xs" />
             <div className="absolute -left-[3px] top-36 w-[3px] h-7 bg-zinc-700/80 rounded-l-xs" />
@@ -48,7 +48,7 @@ export default function PreviewViewport({
                 /* Mobile Web View */
                 <div className="w-full h-full flex flex-col bg-white">
                   {/* Status Bar for Mobile Web Preview */}
-                  <div className="w-full bg-black text-white px-5 pt-2 pb-1.5 flex items-center justify-between shrink-0 select-none">
+                  <div className="w-full bg-[#18181b] text-white px-5 pt-2 pb-1.5 flex items-center justify-between shrink-0 select-none">
                     <span className="text-[11px] font-semibold tracking-tight text-zinc-300 w-10">
                       9:41
                     </span>
@@ -73,7 +73,7 @@ export default function PreviewViewport({
                   )}
 
                   {/* Home Indicator */}
-                  <div className="w-full bg-black py-1.5 shrink-0 flex justify-center">
+                  <div className="w-full bg-[#18181b] py-1.5 shrink-0 flex justify-center">
                     <div className="w-28 h-1 bg-zinc-600/70 rounded-full" />
                   </div>
                 </div>
@@ -81,7 +81,7 @@ export default function PreviewViewport({
             </div>
           </div>
         ) : device === "tablet" ? (
-          <div className="w-[768px] max-w-full h-[90%] max-h-full rounded-2xl p-2 bg-zinc-900 border border-zinc-700/60 shadow-2xl transition-all duration-300">
+          <div className="w-[768px] max-w-full h-[90%] max-h-full rounded-2xl p-2 bg-[#242429] border border-[#35353d] shadow-2xl transition-all duration-300">
             <div className="w-full h-full rounded-xl overflow-hidden bg-white">
               {projectUrl && (
                 <iframe
@@ -94,7 +94,7 @@ export default function PreviewViewport({
             </div>
           </div>
         ) : (
-          <div className="w-full h-full rounded-xl border border-zinc-800/40 overflow-hidden bg-white transition-all duration-300">
+          <div className="w-full h-full rounded-xl border border-[#2d2d34] overflow-hidden bg-white shadow-2xl transition-all duration-300">
             {projectUrl && (
               <iframe
                 ref={iframeRef}

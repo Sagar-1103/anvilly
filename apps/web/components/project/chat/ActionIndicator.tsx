@@ -82,11 +82,11 @@ export function formatActionContent(content: string, done: boolean = false) {
     <div className="inline-flex items-center gap-1.5 truncate max-w-full text-[12.5px] leading-tight">
       <span className="text-zinc-400 shrink-0 font-medium">{displayVerb}</span>
       {isCodeOrPath ? (
-        <span className="font-mono text-[11px] px-1.5 py-0.5 rounded bg-white/[0.04] text-zinc-300 truncate max-w-[240px] sm:max-w-[320px] border border-white/6">
+        <span className="font-mono text-[11px] px-1.5 py-0.5 rounded bg-[#2c2c32] text-zinc-200 truncate max-w-[240px] sm:max-w-[320px] border border-[#3e3e48]">
           {target}
         </span>
       ) : (
-        <span className="text-zinc-300 truncate font-medium">{target}</span>
+        <span className="text-zinc-200 truncate font-medium">{target}</span>
       )}
     </div>
   );
@@ -97,18 +97,18 @@ export default function ActionIndicator({ content, actionType, done }: ActionInd
     <div
       className={`group/item flex items-center justify-between gap-2.5 py-1 px-2 rounded-md transition-colors ${
         done
-          ? "text-zinc-400 hover:text-zinc-300 hover:bg-white/[0.03]"
-          : "text-zinc-200 bg-white/[0.04]"
+          ? "text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.04]"
+          : "text-zinc-200 bg-[#2b2b31] border border-white/8"
       }`}
     >
       <div className="flex items-center gap-2.5 min-w-0 flex-1">
         <div className="flex-shrink-0">
           {!done ? (
-            <Loader2 className="w-3.5 h-3.5 animate-spin text-zinc-400" />
+            <Loader2 className="w-3.5 h-3.5 animate-spin text-[#6366f1]" />
           ) : (
             getIconForActionType(
               actionType,
-              "w-3.5 h-3.5 opacity-60 group-hover/item:opacity-90 transition-opacity"
+              "w-3.5 h-3.5 opacity-70 group-hover/item:opacity-100 transition-opacity"
             )
           )}
         </div>
@@ -120,9 +120,9 @@ export default function ActionIndicator({ content, actionType, done }: ActionInd
 
       <div className="flex-shrink-0 ml-1.5">
         {done ? (
-          <Check className="w-3 h-3 text-zinc-500" />
+          <Check className="w-3 h-3 text-emerald-400/80" />
         ) : (
-          <span className="text-[10px] text-zinc-400 font-mono tracking-tight bg-white/4 px-1.5 py-0.5 rounded border border-white/6">
+          <span className="text-[10px] text-zinc-300 font-mono tracking-tight bg-[#242429] px-1.5 py-0.5 rounded border border-white/10">
             running
           </span>
         )}

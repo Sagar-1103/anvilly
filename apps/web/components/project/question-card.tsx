@@ -72,10 +72,10 @@ export default function QuestionCard({
   }
 
   return (
-    <div className="bg-zinc-950/90 border border-violet-500/30 text-zinc-200 p-4.5 rounded-2xl rounded-bl-md max-w-[92%] text-[13px] space-y-3.5 shadow-xl">
+    <div className="bg-[#242429] border border-[#5856d6]/35 text-zinc-200 p-4.5 rounded-2xl max-w-[95%] text-[13px] space-y-3.5 shadow-xl">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-white/6 pb-2.5">
-        <span className="flex items-center gap-1.5 text-[11px] font-semibold tracking-wide uppercase text-violet-400 font-mono">
+      <div className="flex items-center justify-between border-b border-white/[0.08] pb-2.5">
+        <span className="flex items-center gap-1.5 text-[11px] font-semibold tracking-wide uppercase text-purple-300 font-mono bg-purple-950/60 border border-purple-500/30 px-2.5 py-0.5 rounded-full">
           <HelpCircle className="w-3.5 h-3.5 stroke-[2.5]" />
           Design Decision Needed
         </span>
@@ -120,7 +120,7 @@ export default function QuestionCard({
             selectedIndex === null ||
             (selectedIndex === "custom" && !customText.trim())
           }
-          className="px-4 py-2 cursor-pointer rounded-xl bg-violet-600 text-white hover:bg-violet-500 active:scale-95 text-[12px] font-semibold tracking-wide transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100 flex items-center gap-2 shadow-md shadow-violet-600/20"
+          className="px-4 py-2 cursor-pointer rounded-xl bg-[#5856d6] text-white hover:bg-[#6866e4] active:scale-95 text-[12px] font-semibold tracking-wide transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100 flex items-center gap-2 shadow-md shadow-indigo-600/30"
         >
           {submitting ? (
             <>

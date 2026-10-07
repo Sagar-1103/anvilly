@@ -23,7 +23,7 @@ export default function PlatformTabs({
         }`}
       >
         <Smartphone className="w-3.5 h-3.5" strokeWidth={2.2} />
-        Mobile app
+        Mobile
       </button>
       <button
         type="button"
@@ -35,7 +35,7 @@ export default function PlatformTabs({
         }`}
       >
         <Layout className="w-3.5 h-3.5" strokeWidth={2.2} />
-        Web app
+        Web
       </button>
     </div>
   );

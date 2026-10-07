@@ -13,7 +13,7 @@ export default function EditorBreadcrumbs({ activeFile }: EditorBreadcrumbsProps
   const folderSegments = pathSegments.slice(0, -1);
 
   return (
-    <div className="h-6 bg-[#18181b] border-b border-white/6 px-3 flex items-center gap-1.5 text-[11px] font-mono text-zinc-500 overflow-x-auto no-scrollbar shrink-0 select-none">
+    <div className="h-6 bg-[#18181b] border-b border-[#27272b] px-3 flex items-center gap-1.5 text-[11px] font-mono text-zinc-400 overflow-x-auto no-scrollbar shrink-0 select-none">
       <span className="hover:text-zinc-300 transition-colors cursor-pointer text-zinc-400">
         anvilly-app
       </span>

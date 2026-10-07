@@ -83,7 +83,7 @@ export default function ChatMessageList({
   );
 
   return (
-    <SidebarContent className="p-0! flex-1 overflow-hidden">
+    <SidebarContent className="p-0! flex-1 overflow-hidden bg-[#18181b]">
       <div
         ref={feedRef}
         className="h-full overflow-y-auto px-4 pt-4 pb-6 space-y-4 text-[13px] leading-[1.6]"

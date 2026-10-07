@@ -36,8 +36,8 @@ export default function UserAvatarMenu({
 
   const sizeClasses =
     size === "sm"
-      ? "w-6 h-6 text-[10px]"
-      : "w-8 h-8 text-xs";
+      ? "w-8 h-8 text-xs"
+      : "w-9 h-9 text-[13px]";
 
   const handleConfirmLogout = async () => {
     setIsLoggingOut(true);
@@ -55,7 +55,7 @@ export default function UserAvatarMenu({
         <button
           type="button"
           onClick={() => setDropdownOpen((prev) => !prev)}
-          className={`relative ${sizeClasses} rounded-full overflow-hidden border border-white/10 hover:border-white/30 transition-colors cursor-pointer focus:outline-none focus:ring-1 focus:ring-white/20 flex items-center justify-center`}
+          className={`relative ${sizeClasses} rounded-full overflow-hidden border border-white/15 hover:border-white/35 transition-all duration-200 cursor-pointer focus:outline-none focus:ring-1 focus:ring-white/20 shadow-xs flex items-center justify-center`}
           title={userEmail || "Account"}
         >
           {userImage ? (
@@ -66,8 +66,8 @@ export default function UserAvatarMenu({
               referrerPolicy="no-referrer"
             />
           ) : (
-            <div className="w-full h-full bg-linear-to-br from-violet-600 to-indigo-700 flex items-center justify-center">
-              <span className="text-white font-bold leading-none">
+            <div className="w-full h-full bg-linear-to-b from-zinc-800 via-zinc-900 to-zinc-950 flex items-center justify-center shadow-inner select-none">
+              <span className="text-zinc-200 font-semibold leading-none tracking-tight">
                 {initial}
               </span>
             </div>

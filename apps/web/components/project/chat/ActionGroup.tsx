@@ -60,13 +60,13 @@ export default function ActionGroup({
           /* Live running state: clean, tidy, modern card matching app theme */
           <div
             onClick={toggleExpanded}
-            className="w-full flex items-center justify-between gap-3 px-3 py-2 rounded-xl bg-white/[0.03] hover:bg-white/[0.05] border border-white/6 hover:border-white/10 transition-colors cursor-pointer select-none group"
+            className="w-full flex items-center justify-between gap-3 px-3 py-2 rounded-xl bg-[#242429] hover:bg-[#29292f] border border-white/10 hover:border-white/15 transition-colors cursor-pointer select-none group shadow-xs"
             role="button"
             tabIndex={0}
             title="Click to view details"
           >
             <div className="flex items-center gap-2.5 min-w-0 flex-1">
-              <Loader2 className="w-3.5 h-3.5 animate-spin text-zinc-400 shrink-0" />
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-[#6366f1] shrink-0" />
 
               <div className="flex items-center gap-2 truncate min-w-0 text-[12.5px]">
                 {activeAction ? (
@@ -82,9 +82,9 @@ export default function ActionGroup({
                   <div className="flex items-center gap-1.5 truncate text-zinc-300">
                     {liveThought ? (
                       <div className="flex items-center gap-1.5 truncate">
-                        <span className="text-zinc-500 font-medium shrink-0">Planning</span>
+                        <span className="text-zinc-400 font-medium shrink-0">Planning</span>
                         <span className="text-zinc-600 shrink-0">•</span>
-                        <span className="text-zinc-300 truncate font-mono text-[11.5px] bg-white/[0.04] px-1.5 py-0.5 rounded border border-white/6">
+                        <span className="text-zinc-200 truncate font-mono text-[11.5px] bg-[#2d2d34] px-1.5 py-0.5 rounded border border-white/10">
                           {liveThought}
                         </span>
                       </div>
@@ -97,7 +97,7 @@ export default function ActionGroup({
             </div>
 
             <div className="flex items-center gap-2 shrink-0 ml-2">
-              <span className="text-[11px] font-mono text-zinc-500 bg-white/[0.04] border border-white/6 px-2 py-0.5 rounded-full">
+              <span className="text-[11px] font-mono text-zinc-300 bg-[#2d2d34] border border-[#3f3f48] px-2 py-0.5 rounded-full">
                 {actions.length} action{actions.length !== 1 ? "s" : ""}
               </span>
               <ChevronDown className="w-3.5 h-3.5 text-zinc-500 group-hover:text-zinc-300 transition-colors" />
@@ -107,7 +107,7 @@ export default function ActionGroup({
           /* Completed/history state: minimal, unobtrusive row matching Lovable aesthetic */
           <div
             onClick={toggleExpanded}
-            className="w-fit max-w-full flex items-center gap-2 px-2 py-1 rounded-md hover:bg-white/[0.04] transition-colors cursor-pointer select-none group text-zinc-400 hover:text-zinc-200 my-0.5 text-[12.5px]"
+            className="w-fit max-w-full flex items-center gap-2 px-2 py-1 rounded-md hover:bg-white/[0.05] transition-colors cursor-pointer select-none group text-zinc-400 hover:text-zinc-200 my-0.5 text-[12.5px]"
             role="button"
             tabIndex={0}
             title="Click to view action history"
@@ -132,28 +132,28 @@ export default function ActionGroup({
         )
       ) : (
         /* Expanded state: bounded scrollable container handling any number of actions */
-        <div className="w-full flex flex-col gap-2 p-3 rounded-xl bg-white/[0.03] border border-white/6 transition-all my-1.5">
+        <div className="w-full flex flex-col gap-2 p-3 rounded-xl bg-[#242429] border border-white/10 transition-all my-1.5 shadow-md">
           {/* Header */}
           <div
             onClick={toggleExpanded}
-            className="flex items-center justify-between pb-2 border-b border-white/6 select-none cursor-pointer group"
+            className="flex items-center justify-between pb-2 border-b border-white/[0.08] select-none cursor-pointer group"
           >
             <div className="flex items-center gap-2 text-[12px] font-medium text-zinc-300">
               {isAnyActionRunning ? (
                 <>
-                  <Loader2 className="w-3.5 h-3.5 animate-spin text-zinc-400 shrink-0" />
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-[#6366f1] shrink-0" />
                   <span>
                     Executing actions ({completedCount}/{actions.length})
                   </span>
                 </>
               ) : isCurrentTurn ? (
                 <>
-                  <Loader2 className="w-3.5 h-3.5 animate-spin text-zinc-400 shrink-0" />
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-[#6366f1] shrink-0" />
                   <span>Planning next step...</span>
                 </>
               ) : (
                 <>
-                  <Check className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                  <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                   <span>
                     {actions.length} action{actions.length !== 1 ? "s" : ""} completed
                   </span>
@@ -164,7 +164,7 @@ export default function ActionGroup({
             <button
               type="button"
               onClick={toggleExpanded}
-              className="flex items-center gap-1 text-[11px] text-zinc-500 group-hover:text-zinc-300 transition-colors py-0.5 px-1.5 rounded hover:bg-white/4"
+              className="flex items-center gap-1 text-[11px] text-zinc-500 group-hover:text-zinc-300 transition-colors py-0.5 px-1.5 rounded hover:bg-white/4 cursor-pointer"
             >
               <span>Show less</span>
               <ChevronUp className="w-3 h-3" />
@@ -187,8 +187,8 @@ export default function ActionGroup({
 
             {/* If currently in planning state, render the planning row inside the expanded list */}
             {isCurrentTurn && !activeAction && (
-              <div className="flex items-center gap-2.5 py-1.5 px-2 rounded-md bg-white/[0.02] border border-white/6 text-[12px] text-zinc-400">
-                <Loader2 className="w-3.5 h-3.5 animate-spin text-zinc-500 shrink-0" />
+              <div className="flex items-center gap-2.5 py-1.5 px-2 rounded-md bg-[#1c1c20] border border-white/8 text-[12px] text-zinc-400">
+                <Loader2 className="w-3.5 h-3.5 animate-spin text-[#6366f1] shrink-0" />
                 <span className="truncate">
                   {liveThought ? `Planning • ${liveThought}` : "Planning next step..."}
                 </span>

@@ -35,7 +35,7 @@ export default function ChatSidebar({
   };
 
   return (
-    <Sidebar collapsible="offcanvas" className="border-r border-white/6 overflow-hidden">
+    <Sidebar collapsible="offcanvas" className="border-r border-[#27272b] bg-[#18181b] overflow-hidden">
       {/* 1. Sidebar Header */}
       <ChatSidebarHeader title={project.title} />
 

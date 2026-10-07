@@ -25,7 +25,7 @@ export default function EditorTabBar({
   return (
     <div className="flex flex-col shrink-0 select-none">
       {/* Tab Row */}
-      <div className="h-9 bg-[#111114] border-b border-white/6 flex items-center justify-between px-2 overflow-x-auto no-scrollbar">
+      <div className="h-9 bg-[#18181b] border-b border-[#27272b] flex items-center justify-between px-2 overflow-x-auto no-scrollbar">
         <div className="flex items-center gap-1 overflow-x-auto no-scrollbar h-full flex-1">
           {openTabs.map((file) => {
             const isActive = activeFile?.path === file.path;
@@ -35,8 +35,8 @@ export default function EditorTabBar({
                 onClick={() => onSelectTab(file)}
                 className={`group h-7 px-3 rounded-md flex items-center gap-2 text-xs font-mono transition-all cursor-pointer ${
                   isActive
-                    ? "bg-[#1e1e1e] text-white border border-white/10 shadow-xs"
-                    : "text-zinc-500 hover:text-zinc-300 hover:bg-white/4"
+                    ? "bg-[#242428] text-white border border-[#35353c] shadow-xs"
+                    : "text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.04]"
                 }`}
               >
                 <FileIcon fileName={file.name} />

@@ -32,7 +32,7 @@ export default function CodeEditorView({ sandboxFiles }: CodeEditorViewProps) {
   /* ─── Loading state: fetching file tree ─── */
   if (loading) {
     return (
-      <div className="w-full h-full flex items-center justify-center bg-[#0d0d11] rounded-xl border border-white/6 shadow-2xl">
+      <div className="w-full h-full flex items-center justify-center bg-[#18181b] rounded-xl border border-[#27272b] shadow-2xl">
         <div className="flex flex-col items-center gap-3 animate-in fade-in duration-300">
           <Loader2 className="w-6 h-6 animate-spin text-zinc-500" />
           <span className="text-xs font-mono text-zinc-500">
@@ -46,7 +46,7 @@ export default function CodeEditorView({ sandboxFiles }: CodeEditorViewProps) {
   /* ─── Empty state: no files generated yet ─── */
   if (filePaths.length === 0 && !activeFile) {
     return (
-      <div className="w-full h-full flex items-center justify-center bg-[#0d0d11] rounded-xl border border-white/6 shadow-2xl">
+      <div className="w-full h-full flex items-center justify-center bg-[#18181b] rounded-xl border border-[#27272b] shadow-2xl">
         <div className="flex flex-col items-center gap-4 max-w-xs text-center animate-in fade-in duration-500">
           <div className="relative">
             <div className="w-16 h-16 rounded-2xl bg-white/[0.03] border border-white/8 flex items-center justify-center">
@@ -77,7 +77,7 @@ export default function CodeEditorView({ sandboxFiles }: CodeEditorViewProps) {
   }
 
   return (
-    <div className="w-full h-full flex bg-[#0d0d11] rounded-xl overflow-hidden border border-white/6 shadow-2xl">
+    <div className="w-full h-full flex bg-[#18181b] rounded-xl overflow-hidden border border-[#27272b] shadow-2xl">
       {/* File Tree Explorer */}
       <FileTreeSidebar
         fileTree={fileTree}
@@ -87,7 +87,7 @@ export default function CodeEditorView({ sandboxFiles }: CodeEditorViewProps) {
       />
 
       {/* Editor & Tabs */}
-      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-[#1e1e1e]">
+      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-[#1a1a1d]">
         {/* Tab Bar */}
         <EditorTabBar
           openTabs={openTabs}

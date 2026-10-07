@@ -25,8 +25,8 @@ export default function PromptCard({
 }: PromptCardProps) {
   return (
     <div className="relative z-10 mt-14 w-full max-w-2xl animate-fade-in-up stagger-3">
-      <div className="relative group rounded-3xl p-0.5 bg-linear-to-b from-zinc-700/40 via-zinc-800/20 to-zinc-900/40 shadow-2xl shadow-black/80 transition-all duration-300 focus-within:from-zinc-500/60 focus-within:to-zinc-800/60">
-        <div className="bg-[#09090c] rounded-[22px] p-4 backdrop-blur-xl border border-zinc-800/60 flex flex-col justify-between min-h-52.5">
+      <div className="relative group rounded-3xl p-0.5 bg-linear-to-b from-violet-500/50 via-zinc-800/30 to-zinc-800/60 shadow-2xl shadow-black/80 transition-all duration-300 hover:from-violet-500/60 focus-within:from-violet-500/65 focus-within:to-zinc-800/60">
+        <div className="bg-[#08070c]/90 rounded-[22px] p-4 backdrop-blur-xl border border-zinc-800/70 flex flex-col justify-between min-h-52.5">
           {/* Top Bar: Platform Selector */}
           <div className="flex items-center justify-between mb-3 pb-2 border-b border-zinc-800/40">
             <PlatformTabs activeTab={activeTab} setActiveTab={setActiveTab} />

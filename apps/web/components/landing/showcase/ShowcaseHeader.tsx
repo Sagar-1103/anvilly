@@ -12,12 +12,12 @@ export default function ShowcaseHeader({
   setSearchQuery,
 }: ShowcaseHeaderProps) {
   return (
-    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 pb-6 border-b border-zinc-900">
+    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-6">
       <div>
         <h2 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2.5">
           Explore Your Projects
         </h2>
-        <p className="text-zinc-400 text-sm mt-1">
+        <p className="text-zinc-300 text-sm mt-1 leading-relaxed drop-shadow-[0_1px_4px_rgba(0,0,0,0.6)]">
           Manage and inspect all full-stack applications forged by you on Anvilly.
         </p>
       </div>
