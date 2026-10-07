@@ -1,8 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Smartphone, Layout } from "lucide-react";
+import { Smartphone, Layout, ArrowUpRight } from "lucide-react";
 import { BackendProject } from "./types";
 import ProjectCardMenu from "./ProjectCardMenu";
 
@@ -11,6 +10,7 @@ interface ProjectCardProps {
   gradient: string;
   isMenuOpen: boolean;
   onToggleMenu: () => void;
+  onSelectEdit?: () => void;
   onSelectDelete: () => void;
 }
 
@@ -32,6 +32,7 @@ export default function ProjectCard({
   gradient,
   isMenuOpen,
   onToggleMenu,
+  onSelectEdit,
   onSelectDelete,
 }: ProjectCardProps) {
   const router = useRouter();
@@ -42,12 +43,20 @@ export default function ProjectCard({
   return (
     <div
       onClick={() => router.push(`/projects/${project.id}`)}
-      className="clean-card rounded-2xl overflow-hidden group flex flex-col cursor-pointer border border-zinc-900 hover:border-zinc-800 transition-all relative"
+      className={`clean-card rounded-2xl group flex flex-col cursor-pointer border border-zinc-800/80 hover:border-violet-500/40 hover:shadow-[0_16px_36px_-8px_rgba(0,0,0,0.8),0_0_24px_rgba(168,85,247,0.14)] hover:-translate-y-1 transition-all duration-300 ease-out relative ${
+        isMenuOpen ? "z-30" : "z-10"
+      }`}
     >
       {/* Card Preview Mockup */}
       <div
-        className={`h-44 ${project.previewImage ? "bg-zinc-950" : `bg-linear-to-br ${gradient}`} relative flex flex-col justify-between border-b border-zinc-800/60 overflow-hidden`}
+        className={`h-44 rounded-t-2xl ${project.previewImage ? "bg-zinc-950" : `bg-linear-to-br ${gradient}`} relative flex flex-col justify-between border-b border-zinc-800/60 overflow-hidden`}
       >
+        {/* Subtle light sheen sweep across preview on hover */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out bg-linear-to-r from-transparent via-white/[0.07] to-transparent z-15"
+        />
+
         {project.previewImage ? (
           <div className="relative w-full h-full overflow-hidden">
             {/* Badges Overlay */}
@@ -136,20 +145,22 @@ export default function ProjectCard({
           </div>
         )}
 
-        {/* Hover Open Overlay Button */}
-        <div className="absolute inset-0 bg-black/60 backdrop-blur-xs opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3 z-20">
-          <Link href={`/projects/${project.id}`} onClick={(e) => e.stopPropagation()}>
-            <span className="px-4 py-2 bg-white text-black font-semibold text-xs rounded-lg shadow-lg hover:bg-zinc-200 transition-colors flex items-center gap-1.5 cursor-pointer">
-              Open
-            </span>
-          </Link>
+        {/* Hover Action Pill & Subtle Vignette */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center bg-gradient-to-t from-black/50 via-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+        >
+          <span className="opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 scale-95 group-hover:scale-100 transition-all duration-300 ease-out inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium text-white bg-zinc-950/80 border border-violet-500/30 backdrop-blur-md shadow-[0_8px_20px_rgba(0,0,0,0.6),0_0_14px_rgba(168,85,247,0.25)] group-hover:border-violet-400/50">
+            <span>Open Project</span>
+            <ArrowUpRight className="w-3.5 h-3.5 text-violet-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-200" />
+          </span>
         </div>
       </div>
 
       {/* Card Content */}
       <div className="p-5 flex-1 flex flex-col">
         <div className="flex items-start justify-between gap-2 mb-1.5 relative">
-          <h3 className="text-base font-semibold text-white group-hover:text-zinc-200 transition-colors tracking-tight line-clamp-1 flex-1">
+          <h3 className="text-base font-semibold text-white group-hover:text-violet-200 transition-colors duration-200 tracking-tight line-clamp-1 flex-1">
             {title}
           </h3>
 
@@ -158,6 +169,7 @@ export default function ProjectCard({
             project={project}
             isOpen={isMenuOpen}
             onToggle={onToggleMenu}
+            onSelectEdit={onSelectEdit || (() => {})}
             onSelectDelete={onSelectDelete}
           />
         </div>

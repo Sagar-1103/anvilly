@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { answerQuestion, createProject, deleteProject, getProject, getProjects, pingProject, updateProject } from "../controllers/project.controller";
+import { answerQuestion, createProject, deleteProject, getProject, getProjects, pingProject, updateProject, updateProjectMetadata } from "../controllers/project.controller";
 import { getFileTree, readFileContent } from "../controllers/file.controller";
 import { requireAuth } from "../middlewares/auth.middleware";
 
@@ -14,6 +14,7 @@ projectRouter.get("/:projectId/files", getFileTree);
 projectRouter.get("/:projectId/files/read", readFileContent);
 projectRouter.get("/:projectId",getProject);
 projectRouter.post("/:projectId",updateProject);
+projectRouter.patch("/:projectId", updateProjectMetadata);
 projectRouter.delete("/:projectId",deleteProject);
 projectRouter.get("/ping/:projectId",pingProject);
 

@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import { AsyncHandler, getMessages, getUserId } from "../utils/helper-functions";
-import { answerQuestionSchema, createProjectSchema, updateProjectSchema } from "../utils/project-schema";
+import { answerQuestionSchema, createProjectSchema, updateProjectMetadataSchema, updateProjectSchema } from "../utils/project-schema";
 import { sendValidationError } from "../utils/validation";
 import { prisma } from "@repo/db/client";
 import { env } from "../constants/env";
@@ -359,4 +359,51 @@ export const deleteProject = AsyncHandler(async (req: Request, res: Response) =>
     });
 
     return res.status(200).json({ success: true, message: "Project deleted successfully" });
+});
+
+export const updateProjectMetadata = AsyncHandler(async (req: Request, res: Response) => {
+    const userId = getUserId(req);
+    if (!userId) {
+        return res.status(403).json({ success: false, message: "User id not found" });
+    }
+
+    const projectId = req.params.projectId as string;
+    if (!projectId) {
+        return res.status(400).json({ success: false, message: "Project ID is required" });
+    }
+
+    const parsedBody = updateProjectMetadataSchema.safeParse(req.body);
+    if (!parsedBody.success) {
+        sendValidationError(res, parsedBody.error);
+        return;
+    }
+
+    const project = await prisma.project.findFirst({
+        where: {
+            id: projectId,
+            userId,
+        },
+    });
+
+    if (!project) {
+        return res.status(404).json({ success: false, message: "Project not found or unauthorized" });
+    }
+
+    const { title, description } = parsedBody.data;
+
+    const updatedProject = await prisma.project.update({
+        where: {
+            id: projectId,
+        },
+        data: {
+            ...(title !== undefined ? { title } : {}),
+            ...(description !== undefined ? { description } : {}),
+        },
+    });
+
+    return res.status(200).json({
+        success: true,
+        message: "Project updated successfully",
+        project: updatedProject,
+    });
 });

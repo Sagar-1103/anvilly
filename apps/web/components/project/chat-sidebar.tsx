@@ -14,6 +14,7 @@ interface ChatSidebarProps {
   liveThought?: string;
   sendPrompt: (userPrompt: string) => Promise<void>;
   onAnswerSubmit?: (questionId: string, answer: string) => Promise<void>;
+  onEdit?: () => void;
 }
 
 export default function ChatSidebar({
@@ -23,6 +24,7 @@ export default function ChatSidebar({
   liveThought,
   sendPrompt,
   onAnswerSubmit,
+  onEdit,
 }: ChatSidebarProps) {
   const [prompt, setPrompt] = useState("");
 
@@ -37,7 +39,7 @@ export default function ChatSidebar({
   return (
     <Sidebar collapsible="offcanvas" className="border-r border-[#27272b] bg-[#18181b] overflow-hidden">
       {/* 1. Sidebar Header */}
-      <ChatSidebarHeader title={project.title} />
+      <ChatSidebarHeader title={project.title} onEdit={onEdit} />
 
       {/* 2. Message Feed */}
       <ChatMessageList

@@ -353,6 +353,7 @@ export function useProjectIDE(projectId: string, onFileChange?: (toolName: strin
         fetchedProjectIdRef.current = projectId;
         const {
           title,
+          description,
           url,
           expoUrl,
           tunnelUrl,
@@ -361,8 +362,10 @@ export function useProjectIDE(projectId: string, onFileChange?: (toolName: strin
           userPrompt,
         } = res.data;
         setProject({
+          id: projectId,
           url: url || "",
           title: title || "",
+          description: description || "",
           expoUrl,
           tunnelUrl,
           template,
@@ -441,6 +444,41 @@ export function useProjectIDE(projectId: string, onFileChange?: (toolName: strin
     }
   }, [jwtToken, status, projectId]);
 
+  const updateProjectDetails = async (newTitle: string, newDescription?: string) => {
+    try {
+      const response = await axios.patch(
+        `${BACKEND_URL}/api/projects/${projectId}`,
+        {
+          title: newTitle,
+          description: newDescription ?? "",
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session?.jwtToken}`,
+          },
+        }
+      );
+      if (response.data?.success) {
+        setProject((prev) => ({
+          ...prev,
+          title: newTitle,
+          description: newDescription !== undefined ? newDescription : prev.description,
+        }));
+        toast.success("Project updated successfully");
+        return true;
+      } else {
+        toast.error(response.data?.message || "Failed to update project");
+        return false;
+      }
+    } catch (err: any) {
+      console.error("Error updating project details:", err);
+      const msg = err.response?.data?.message || "Failed to update project";
+      toast.error(msg);
+      throw err;
+    }
+  };
+
   return {
     device,
     setDevice,
@@ -457,5 +495,6 @@ export function useProjectIDE(projectId: string, onFileChange?: (toolName: strin
     loading,
     error,
     getProject,
+    updateProjectDetails,
   };
 }

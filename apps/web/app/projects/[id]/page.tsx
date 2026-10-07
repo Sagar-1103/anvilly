@@ -1,12 +1,13 @@
 "use client";
 
-import { use, useEffect, useRef } from "react";
+import { use, useEffect, useRef, useState } from "react";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import ChatSidebar from "@/components/project/chat-sidebar";
 import RightHeader from "@/components/project/right-header";
 import PreviewViewport from "@/components/project/preview-viewport";
 import ProjectNotFound from "@/components/project/ProjectNotFound";
 import ProjectLoadingScreen from "@/components/project/ProjectLoadingScreen";
+import ProjectEditModal from "@/components/project/ProjectEditModal";
 import { useProjectIDE } from "@/hooks/use-project-ide";
 import { useSandboxFiles } from "@/hooks/use-sandbox-files";
 
@@ -16,6 +17,7 @@ export default function ProjectIDEPage({
   params: Promise<{ id: string }>;
 }) {
   const { id: projectId } = use(params);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const sandboxFiles = useSandboxFiles(projectId);
 
@@ -35,6 +37,7 @@ export default function ProjectIDEPage({
     loading,
     error,
     getProject,
+    updateProjectDetails,
   } = useProjectIDE(projectId, sandboxFiles.handleFileChange);
 
   const hasFetchedFiles = useRef(false);
@@ -95,6 +98,7 @@ export default function ProjectIDEPage({
           liveThought={liveThought}
           sendPrompt={(promptText) => sendPrompt(promptText, false)}
           onAnswerSubmit={handleAnswerSubmit}
+          onEdit={() => setIsEditModalOpen(true)}
         />
 
         <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
@@ -105,6 +109,7 @@ export default function ProjectIDEPage({
             setActiveTab={setActiveTab}
             reloadProjectLink={reloadProjectLink}
             project={project}
+            onEdit={() => setIsEditModalOpen(true)}
           />
           <PreviewViewport
             device={device}
@@ -116,6 +121,19 @@ export default function ProjectIDEPage({
           />
         </main>
       </div>
+
+      <ProjectEditModal
+        isOpen={isEditModalOpen}
+        project={{
+          id: projectId,
+          title: project.title,
+          description: project.description,
+        }}
+        onClose={() => setIsEditModalOpen(false)}
+        onSave={async (newTitle, newDesc) => {
+          await updateProjectDetails(newTitle, newDesc);
+        }}
+      />
     </SidebarProvider>
   );
 }

@@ -10,6 +10,7 @@ import ShowcaseHeader from "./showcase/ShowcaseHeader";
 import ShowcaseTabs from "./showcase/ShowcaseTabs";
 import ProjectCard from "./showcase/ProjectCard";
 import ProjectDeleteModal from "./showcase/ProjectDeleteModal";
+import ProjectEditModal from "../project/ProjectEditModal";
 import ShowcaseSkeleton from "./showcase/ShowcaseSkeleton";
 import ShowcaseEmptyState from "./showcase/ShowcaseEmptyState";
 
@@ -25,6 +26,7 @@ export default function ProjectShowcase() {
   const [projects, setProjects] = useState<BackendProject[]>([]);
   const [loading, setLoading] = useState(true);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [projectToEdit, setProjectToEdit] = useState<BackendProject | null>(null);
   const [projectToDelete, setProjectToDelete] = useState<BackendProject | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const { data: session } = useSession();
@@ -89,6 +91,43 @@ export default function ProjectShowcase() {
     }
   };
 
+  const handleEditSave = async (newTitle: string, newDescription: string) => {
+    if (!projectToEdit) return;
+    const id = projectToEdit.id;
+    try {
+      const response = await axios.patch(
+        `${BACKEND_URL}/api/projects/${id}`,
+        {
+          title: newTitle,
+          description: newDescription,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session?.jwtToken}`,
+          },
+        }
+      );
+
+      if (response.data?.success) {
+        toast.success("Project updated successfully");
+        setProjects((prev) =>
+          prev.map((p) =>
+            p.id === id ? { ...p, title: newTitle, description: newDescription } : p
+          )
+        );
+      } else {
+        toast.error(response.data?.message || "Failed to update project");
+        throw new Error(response.data?.message || "Failed to update project");
+      }
+    } catch (error: any) {
+      console.error("Error updating project:", error);
+      const msg = error.response?.data?.message || "Failed to update project";
+      toast.error(msg);
+      throw error;
+    }
+  };
+
   const filteredProjects = projects
     .filter((p) => {
       if (activeTab === "Web Apps") return p.template !== "node_react_native_expo";
@@ -138,6 +177,10 @@ export default function ProjectShowcase() {
               onToggleMenu={() =>
                 setOpenMenuId(openMenuId === project.id ? null : project.id)
               }
+              onSelectEdit={() => {
+                setOpenMenuId(null);
+                setProjectToEdit(project);
+              }}
               onSelectDelete={() => {
                 setOpenMenuId(null);
                 setProjectToDelete(project);
@@ -154,7 +197,15 @@ export default function ProjectShowcase() {
         />
       )}
 
-      {/* 4. Delete Confirmation Modal */}
+      {/* 4. Edit Project Modal */}
+      <ProjectEditModal
+        isOpen={!!projectToEdit}
+        project={projectToEdit}
+        onClose={() => setProjectToEdit(null)}
+        onSave={handleEditSave}
+      />
+
+      {/* 5. Delete Confirmation Modal */}
       <ProjectDeleteModal
         project={projectToDelete}
         isDeleting={isDeleting}
