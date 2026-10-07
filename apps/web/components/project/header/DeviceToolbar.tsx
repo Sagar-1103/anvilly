@@ -8,6 +8,7 @@ interface DeviceToolbarProps {
   reloadProjectLink: () => void;
   projectUrl?: string;
   template?: string;
+  isPreviewReady?: boolean;
 }
 
 export default function DeviceToolbar({
@@ -16,6 +17,7 @@ export default function DeviceToolbar({
   reloadProjectLink,
   projectUrl,
   template,
+  isPreviewReady = true,
 }: DeviceToolbarProps) {
   const cycleDevice = () => {
     if (device === "desktop") setDevice("tablet");
@@ -24,7 +26,7 @@ export default function DeviceToolbar({
   };
 
   const openProjectUrl = () => {
-    if (!projectUrl) return;
+    if (!projectUrl || !isPreviewReady) return;
     window.open(projectUrl, "_blank");
   };
 
@@ -58,8 +60,9 @@ export default function DeviceToolbar({
         <button
           type="button"
           onClick={reloadProjectLink}
-          className="p-1.5 cursor-pointer rounded-lg text-zinc-400 hover:text-white hover:bg-white/[0.06] transition-colors"
-          title="Refresh preview"
+          className="p-1.5 cursor-pointer rounded-lg text-zinc-400 hover:text-white hover:bg-white/[0.06] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          title={!isPreviewReady ? "Preview is generating..." : "Refresh preview"}
+          disabled={!isPreviewReady}
         >
           <RotateCw className="w-3.5 h-3.5" strokeWidth={2} />
         </button>
@@ -69,8 +72,8 @@ export default function DeviceToolbar({
           type="button"
           onClick={openProjectUrl}
           className="p-1.5 cursor-pointer rounded-lg text-zinc-400 hover:text-white hover:bg-white/[0.06] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-          title="Open in new tab"
-          disabled={!projectUrl}
+          title={!isPreviewReady ? "Preview is generating..." : "Open in new tab"}
+          disabled={!projectUrl || !isPreviewReady}
         >
           <ExternalLink className="w-3.5 h-3.5" strokeWidth={2} />
         </button>

@@ -5,6 +5,7 @@ import type { SandboxFilesState } from "@/hooks/use-sandbox-files";
 import type { Project } from "@/lib/types";
 import CodeEditorView from "./code-editor/CodeEditorView";
 import ExpoPreviewCard from "./preview/ExpoPreviewCard";
+import PreviewBuildingState from "./preview/PreviewBuildingState";
 import { Wifi } from "lucide-react";
 
 export default function PreviewViewport({
@@ -14,6 +15,8 @@ export default function PreviewViewport({
   projectUrl,
   iframeRef,
   sandboxFiles,
+  isPreviewReady = true,
+  liveThought,
 }: {
   device: "desktop" | "tablet" | "mobile";
   activeTab: "preview" | "code";
@@ -21,6 +24,8 @@ export default function PreviewViewport({
   projectUrl: string;
   iframeRef: RefObject<HTMLIFrameElement | null>;
   sandboxFiles: SandboxFilesState;
+  isPreviewReady?: boolean;
+  liveThought?: string;
 }) {
   const isExpo = project?.template === "node_react_native_expo";
   const isMobileView = isExpo || device === "mobile";
@@ -63,13 +68,19 @@ export default function PreviewViewport({
                     </div>
                   </div>
 
-                  {projectUrl && (
-                    <iframe
-                      ref={iframeRef}
-                      src={projectUrl}
-                      className="w-full flex-1 border-0 bg-white"
-                      title="Preview"
-                    />
+                  {!isPreviewReady ? (
+                    <div className="w-full flex-1 relative overflow-hidden">
+                      <PreviewBuildingState />
+                    </div>
+                  ) : (
+                    projectUrl && (
+                      <iframe
+                        ref={iframeRef}
+                        src={projectUrl}
+                        className="w-full flex-1 border-0 bg-white animate-in fade-in duration-300"
+                        title="Preview"
+                      />
+                    )
                   )}
 
                   {/* Home Indicator */}
@@ -82,26 +93,34 @@ export default function PreviewViewport({
           </div>
         ) : device === "tablet" ? (
           <div className="w-[768px] max-w-full h-[90%] max-h-full rounded-2xl p-2 bg-[#242429] border border-[#35353d] shadow-2xl transition-all duration-300">
-            <div className="w-full h-full rounded-xl overflow-hidden bg-white">
-              {projectUrl && (
-                <iframe
-                  ref={iframeRef}
-                  src={projectUrl}
-                  className="w-full h-full border-0 bg-white"
-                  title="Preview"
-                />
+            <div className="w-full h-full rounded-xl overflow-hidden bg-white relative">
+              {!isPreviewReady ? (
+                <PreviewBuildingState />
+              ) : (
+                projectUrl && (
+                  <iframe
+                    ref={iframeRef}
+                    src={projectUrl}
+                    className="w-full h-full border-0 bg-white animate-in fade-in duration-300"
+                    title="Preview"
+                  />
+                )
               )}
             </div>
           </div>
         ) : (
-          <div className="w-full h-full rounded-xl border border-[#2d2d34] overflow-hidden bg-white shadow-2xl transition-all duration-300">
-            {projectUrl && (
-              <iframe
-                ref={iframeRef}
-                src={projectUrl}
-                className="w-full h-full border-0 bg-white"
-                title="Preview"
-              />
+          <div className="w-full h-full rounded-xl border border-[#2d2d34] overflow-hidden bg-white shadow-2xl transition-all duration-300 relative">
+            {!isPreviewReady ? (
+              <PreviewBuildingState />
+            ) : (
+              projectUrl && (
+                <iframe
+                  ref={iframeRef}
+                  src={projectUrl}
+                  className="w-full h-full border-0 bg-white animate-in fade-in duration-300"
+                  title="Preview"
+                />
+              )
             )}
           </div>
         )

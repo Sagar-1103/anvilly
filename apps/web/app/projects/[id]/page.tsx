@@ -31,6 +31,7 @@ export default function ProjectIDEPage({
     busy,
     liveThought,
     iframeRef,
+    isPreviewReady,
     reloadProjectLink,
     sendPrompt,
     handleAnswerSubmit,
@@ -98,7 +99,6 @@ export default function ProjectIDEPage({
           liveThought={liveThought}
           sendPrompt={(promptText) => sendPrompt(promptText, false)}
           onAnswerSubmit={handleAnswerSubmit}
-          onEdit={() => setIsEditModalOpen(true)}
         />
 
         <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
@@ -110,6 +110,7 @@ export default function ProjectIDEPage({
             reloadProjectLink={reloadProjectLink}
             project={project}
             onEdit={() => setIsEditModalOpen(true)}
+            isPreviewReady={isPreviewReady}
           />
           <PreviewViewport
             device={device}
@@ -118,6 +119,8 @@ export default function ProjectIDEPage({
             projectUrl={project.url}
             iframeRef={iframeRef}
             sandboxFiles={sandboxFiles}
+            isPreviewReady={isPreviewReady}
+            liveThought={liveThought}
           />
         </main>
       </div>

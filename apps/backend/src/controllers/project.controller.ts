@@ -189,6 +189,10 @@ export const getProject = AsyncHandler(async (req: Request, res: Response) => {
         console.error("Error connecting to sandbox in getProject:", error);
     }
 
+    const hasDevServerStarted = messages.some(
+        (m) => m.type === "TOOL_CALL" && (m.name === "run_project_tool" || (m as any).toolCall === "RUN_PROJECT_TOOL")
+    );
+
     const data = {
         title: project.title,
         description: project.description,
@@ -199,6 +203,7 @@ export const getProject = AsyncHandler(async (req: Request, res: Response) => {
         userPrompt: project.prompt,
         previewImage: project.previewImage,
         messages,
+        hasDevServerStarted,
     };
 
     return res.status(200).json({ success: true, data, message: "Project fetched successfully" });

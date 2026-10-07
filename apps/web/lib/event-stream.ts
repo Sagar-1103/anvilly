@@ -8,6 +8,7 @@ export const processStream = async (
   onFileChange?: (toolName: string, args: any) => void,
   onToolCallEnd?: (data: { name: string }) => void,
   onDone?: () => void,
+  onRestartProject?: () => void,
 ) => {
     const decoder = new TextDecoder("utf-8");
     let buffer = "";
@@ -60,6 +61,9 @@ export const processStream = async (
 
               if (eventName === "restart_project") {
                 reloadProjectLink();
+                if (onRestartProject) {
+                  onRestartProject();
+                }
               }
 
               if (eventName === "done") {

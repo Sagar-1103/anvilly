@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Smartphone, Layout, ArrowUpRight } from "lucide-react";
+import { Smartphone, Layout } from "lucide-react";
 import { BackendProject } from "./types";
 import ProjectCardMenu from "./ProjectCardMenu";
 
@@ -144,17 +144,6 @@ export default function ProjectCard({
             </div>
           </div>
         )}
-
-        {/* Hover Action Pill & Subtle Vignette */}
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center bg-gradient-to-t from-black/50 via-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-        >
-          <span className="opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 scale-95 group-hover:scale-100 transition-all duration-300 ease-out inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium text-white bg-zinc-950/80 border border-violet-500/30 backdrop-blur-md shadow-[0_8px_20px_rgba(0,0,0,0.6),0_0_14px_rgba(168,85,247,0.25)] group-hover:border-violet-400/50">
-            <span>Open Project</span>
-            <ArrowUpRight className="w-3.5 h-3.5 text-violet-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-200" />
-          </span>
-        </div>
       </div>
 
       {/* Card Content */}

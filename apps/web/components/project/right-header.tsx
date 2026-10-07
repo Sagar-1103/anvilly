@@ -16,6 +16,7 @@ interface RightHeaderProps {
   reloadProjectLink: () => void;
   project: Project;
   onEdit?: () => void;
+  isPreviewReady?: boolean;
 }
 
 export default function RightHeader({
@@ -26,6 +27,7 @@ export default function RightHeader({
   reloadProjectLink,
   project,
   onEdit,
+  isPreviewReady = true,
 }: RightHeaderProps) {
   const handleShare = async () => {
     try {
@@ -54,6 +56,7 @@ export default function RightHeader({
           reloadProjectLink={reloadProjectLink}
           projectUrl={project.url}
           template={project.template}
+          isPreviewReady={isPreviewReady}
         />
       </div>
 

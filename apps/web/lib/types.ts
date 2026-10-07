@@ -6,6 +6,7 @@ export interface Project {
     template?: string;
     expoUrl?: string;
     tunnelUrl?: string;
+    hasDevServerStarted?: boolean;
 }
 
 

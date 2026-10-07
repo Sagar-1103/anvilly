@@ -138,6 +138,7 @@ export function useProjectIDE(projectId: string, onFileChange?: (toolName: strin
   const [busy, setBusy] = useState(false);
   const [liveThought, setLiveThought] = useState<string>("");
   const [loading, setLoading] = useState(true);
+  const [isPreviewReady, setIsPreviewReady] = useState(false);
   const [error, setError] = useState<{ message: string; statusCode?: number } | null>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const fetchedProjectIdRef = useRef<string | null>(null);
@@ -150,6 +151,7 @@ export function useProjectIDE(projectId: string, onFileChange?: (toolName: strin
   }, [onFileChange]);
 
   const reloadProjectLink = () => {
+    setIsPreviewReady(true);
     const iframe = iframeRef.current;
     if (!iframe) return;
     iframe.src = iframe.src;
@@ -268,6 +270,7 @@ export function useProjectIDE(projectId: string, onFileChange?: (toolName: strin
         },
         () => {
           setLiveThought("");
+          setIsPreviewReady(true);
           setMessages((prev) => {
             const resolved = prev.map((m) =>
               m.role === "action" && !m.actionDone ? { ...m, actionDone: true } : m
@@ -280,6 +283,9 @@ export function useProjectIDE(projectId: string, onFileChange?: (toolName: strin
             }
             return resolved;
           });
+        },
+        () => {
+          setIsPreviewReady(true);
         }
       );
     } catch (error) {
@@ -360,6 +366,7 @@ export function useProjectIDE(projectId: string, onFileChange?: (toolName: strin
           template,
           messages: backendMessages,
           userPrompt,
+          hasDevServerStarted,
         } = res.data;
         setProject({
           id: projectId,
@@ -369,7 +376,30 @@ export function useProjectIDE(projectId: string, onFileChange?: (toolName: strin
           expoUrl,
           tunnelUrl,
           template,
+          hasDevServerStarted,
         });
+
+        const isExpo = template === "node_react_native_expo";
+        const hasRestarted = Boolean(
+          hasDevServerStarted ||
+          (backendMessages && backendMessages.some((m: any) =>
+            m.toolCall === "RUN_PROJECT_TOOL" ||
+            m.name === "run_project_tool" ||
+            (m.arguments && m.actionType === "run_project_tool")
+          ))
+        );
+
+        // If it's an existing project that previously ran dev server or has existing completed history
+        const isExistingCompletedProject = Boolean(
+          hasRestarted ||
+          (backendMessages && backendMessages.length > 0 && !userPrompt)
+        );
+
+        if (isExpo || isExistingCompletedProject) {
+          setIsPreviewReady(true);
+        } else {
+          setIsPreviewReady(false);
+        }
 
         if (template === "node_react_native_expo") {
           setDevice("mobile");
@@ -489,6 +519,8 @@ export function useProjectIDE(projectId: string, onFileChange?: (toolName: strin
     busy,
     liveThought,
     iframeRef,
+    isPreviewReady,
+    setIsPreviewReady,
     reloadProjectLink,
     sendPrompt,
     handleAnswerSubmit,
