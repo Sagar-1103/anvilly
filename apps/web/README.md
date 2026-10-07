@@ -1,36 +1,84 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Anvilly Web: Next.js Cloud IDE & App Showcase Frontend
+
+## Features
+
+- **Prompt Forge & App Creation**: Prompt input interface supporting dual platform targets:
+  - **Web Applications**: React 19, Bun, Tailwind CSS v4, and Shadcn UI.
+  - **Mobile Applications**: React Native and Expo SDK.
+- **In-Browser Cloud IDE (`/projects/[id]`)**:
+  - **Multi-Tab Monaco Code Editor**: High-performance code editor (`@monaco-editor/react`) featuring file tabs, syntax highlighting, and live filesystem navigation.
+  - **Real-Time Agent Chat Sidebar**: Direct Server-Sent Events (SSE) feed displaying the AI agent's reasoning steps, tool executions, terminal outputs, and error resolution progress.
+  - **Interactive Human-in-the-Loop Q&A**: Dynamically renders interactive question cards when the agent triggers `qna_tool`, allowing users to select architectural choices and unblock code generation.
+  - **Multi-Device Live Web Preview**: Real-time iframe preview with viewport switching between Desktop, Tablet, and Mobile layouts, container reloading, and external tab launcher.
+  - **Expo Go QR Mobile Testing**: Dynamic QR code generator rendering live Expo tunnel endpoints for scanning and testing mobile apps instantly on physical iOS and Android devices.
+- **Project Showcase & Management**:
+  - Filter projects by platform (All, Web Apps, Mobile Apps) or search by project name.
+  - Card menus with hover actions and non-clipped dropdowns.
+  - In-place project edit modal to rename projects and adjust descriptions with live synchronization.
+  - Safe project deletion with automatic cloud container de-provisioning.
+- **Authentication**: NextAuth.js session management supporting Credentials (email/password with bcrypt hashing) and OAuth providers (Google, GitHub, Discord) backed by PostgreSQL.
+
+---
+
+## Tech Stack
+
+- **Framework**: Next.js 16 (App Router, Turbopack) & React 19
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS v4, `tw-animate-css`
+- **Code Editor**: Monaco Editor (`@monaco-editor/react`)
+- **UI Components**: Radix UI primitives, Lucide React, Sonner toasts
+- **Markdown & Code Rendering**: `react-markdown`, `remark-gfm`
+- **Mobile QR Generator**: `qrcode.react`
+- **Authentication**: NextAuth.js
+- **API Client**: Axios
+
+---
+
+## Environment Configuration
+
+Create a `.env` file in `apps/web/`:
+
+```env
+# Backend API Endpoint
+NEXT_PUBLIC_BACKEND_URL=http://localhost:3001
+
+# NextAuth Configuration
+NEXTAUTH_URL=http://localhost:3000
+JWT_SECRET=your_jwt_secret_key_minimum_32_characters
+
+# Database Connection (Prisma)
+DATABASE_URL=postgresql://username:password@localhost:5432/anvilly_db
+
+# Optional OAuth Providers
+AUTH_GITHUB_ID=your_github_client_id
+AUTH_GITHUB_SECRET=your_github_client_secret
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+DISCORD_CLIENT_ID=your_discord_client_id
+DISCORD_CLIENT_SECRET=your_discord_client_secret
+```
+
+---
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- **Bun**: v1.1+ ([Installation](https://bun.sh))
+- **Node.js**: v18+ (for Next.js Turbopack compatibility)
+- **Running Backend**: The backend service must be running on `http://localhost:3001`
+- **Database**: PostgreSQL database with schema pushed (`bunx prisma db push`)
+
+### Installation & Run
+
+From the monorepo root or inside `apps/web/`:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# Install dependencies
+bun install
+
+# Start Next.js development server
+bun run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
