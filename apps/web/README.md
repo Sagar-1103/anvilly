@@ -1,11 +1,11 @@
-# Anvilly Web: Next.js Cloud IDE & App Showcase Frontend
+# Anvilly Web: Next.js Frontend & App Showcase
 
 ## Features
 
 - **Prompt Forge & App Creation**: Prompt input interface supporting dual platform targets:
   - **Web Applications**: React 19, Bun, Tailwind CSS v4, and Shadcn UI.
   - **Mobile Applications**: React Native and Expo SDK.
-- **In-Browser Cloud IDE (`/projects/[id]`)**:
+- **In-Browser Workspace (`/projects/[id]`)**:
   - **Multi-Tab Monaco Code Editor**: High-performance code editor (`@monaco-editor/react`) featuring file tabs, syntax highlighting, and live filesystem navigation.
   - **Real-Time Agent Chat Sidebar**: Direct Server-Sent Events (SSE) feed displaying the AI agent's reasoning steps, tool executions, terminal outputs, and error resolution progress.
   - **Interactive Human-in-the-Loop Q&A**: Dynamically renders interactive question cards when the agent triggers `qna_tool`, allowing users to select architectural choices and unblock code generation.

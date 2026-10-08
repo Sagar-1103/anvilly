@@ -1,6 +1,6 @@
-# Anvilly: Autonomous AI Full-Stack App Generator & Cloud IDE
+# Anvilly: Autonomous AI Full-Stack App Generator
 
-Anvilly is an autonomous AI developer platform and cloud IDE that transforms natural language prompts into production-ready web and mobile applications in seconds. It provisions isolated E2B cloud sandboxes, executes an iterative multi-step agent loop with live filesystem modifications and package installations, and provides an in-browser development environment complete with a multi-tab Monaco code editor, live iframe preview, Expo Go mobile preview via QR code tunnels, and human-in-the-loop interactive AI chat.
+Anvilly is an autonomous AI developer platform that transforms natural language prompts into production-ready web and mobile applications in seconds. It provisions isolated E2B cloud sandboxes, executes an iterative multi-step agent loop with live filesystem modifications and package installations, and provides an in-browser development environment complete with a multi-tab Monaco code editor, live iframe preview, Expo Go mobile preview via QR code tunnels, and human-in-the-loop interactive AI chat.
 
 <!-- Optional Badges / Links -->
 Live Site: [https://anvilly.com](https://anvilly.com) | Demo Video: [YouTube Demo](https://youtu.be/demo-video-link)
@@ -13,7 +13,7 @@ Live Site: [https://anvilly.com](https://anvilly.com) | Demo Video: [YouTube Dem
 ![Anvilly Landing Page & Prompt Forge](https://raw.githubusercontent.com/Sagar-1103/anvilly/main/apps/web/public/hero-aurora.webp)
 
 <!-- Placeholder for additional previews:
-![Anvilly Cloud IDE Workspace](path/to/ide-preview.png)
+![Anvilly Workspace](path/to/ide-preview.png)
 ![Mobile Expo QR Preview](path/to/expo-preview.png)
 -->
 
@@ -66,40 +66,13 @@ Live Site: [https://anvilly.com](https://anvilly.com) | Demo Video: [YouTube Dem
 
 ## Architecture
 
-Anvilly is structured as a decoupled Turborepo monorepo dividing the web client, the backend orchestration engine, and shared database packages:
+![Anvilly System Architecture](./anvilly-architecture.png)
 
-```
-anvilly/
-├── apps/
-│   ├── web/                     # Next.js 16 frontend application
-│   │   ├── app/                 # App Router (landing, projects/[id] IDE, api routes)
-│   │   ├── components/          # React components (landing, project IDE, showcase)
-│   │   ├── hooks/               # Custom hooks (useProjectIDE, useSandboxFiles)
-│   │   └── lib/                 # NextAuth, axios configs, and shared types
-│   │
-│   └── backend/                 # Express 5 backend API & Agent Orchestrator
-│       ├── src/
-│       │   ├── controllers/     # Project, file, and auth controllers
-│       │   ├── providers/       # LLM provider implementations (DeepSeek)
-│       │   ├── routes/          # Express route definitions
-│       │   └── utils/
-│       │       ├── agent-loop.ts # Core autonomous AI execution cycle
-│       │       ├── event-stream.ts # Server-Sent Events implementation
-│       │       ├── screenshot.ts # Headless Puppeteer screenshot capture
-│       │       └── tools/       # Agent tool definitions & handlers
-│       │           ├── bash.ts
-│       │           ├── build-project.ts
-│       │           ├── delete-file.ts
-│       │           ├── qna.ts
-│       │           ├── read-file.ts
-│       │           ├── run-project.ts
-│       │           └── write-file.ts
-│
-└── packages/
-    ├── db/                      # Shared PostgreSQL database client & Prisma schema
-    ├── eslint-config/           # Monorepo linting configurations
-    └── typescript-config/       # Monorepo TypeScript base configurations
-```
+- **Client Layer (Next.js & Monaco IDE)**: Browser workspace where users enter prompts, inspect code in Monaco, and interact with the live iframe / Expo preview.
+- **Orchestration Layer (Express Backend)**: The central control unit coordinating user requests, the autonomous agent loop, and real-time SSE progress streaming.
+- **Intelligence Layer (DeepSeek API)**: The reasoning engine that plans application structures, writes code, and executes structured tool calls.
+- **Runtime Layer (E2B Cloud Sandboxes)**: Isolated, persistent cloud containers where code is executed, packages are installed, dev servers run, and Puppeteer captures screenshots.
+- **Persistence Layer (PostgreSQL & Redis)**: PostgreSQL stores users, projects, and metadata via Prisma, while Redis handles session state, sandbox status, and cache.
 
 ---
 

@@ -33,43 +33,15 @@
 
 ---
 
-## Architecture & Directory Structure
+## Architecture
 
-```
-apps/backend/
-├── src/
-│   ├── index.ts                 # Express application entrypoint & Redis connection
-│   ├── constants/               # System prompts, tool definitions, and environment configs
-│   │   ├── env.ts               # Environment variable validation
-│   │   ├── prompts.ts           # Agent system prompt & framework instructions
-│   │   └── tools.ts             # Function calling definitions for DeepSeek
-│   ├── controllers/
-│   │   ├── file.controller.ts   # Sandbox file tree & file content reading
-│   │   └── project.controller.ts# Project creation, updates, deletion, Q&A, and metadata
-│   ├── middlewares/
-│   │   └── auth.middleware.ts   # JWT authentication middleware
-│   ├── providers/
-│   │   └── deepseek.ts          # DeepSeek LLM client and chat completions wrapper
-│   ├── routes/
-│   │   ├── index.ts             # Root router & health check
-│   │   └── project.route.ts     # Protected project management routes
-│   └── utils/
-│       ├── agent-loop.ts        # Core autonomous agent loop and tool execution
-│       ├── event-stream.ts      # Server-Sent Events client manager
-│       ├── project-schema.ts    # Zod schemas for project input validation
-│       ├── redis.ts             # Redis client and connection handlers
-│       ├── screenshot.ts        # Puppeteer screenshot capture utility
-│       └── tools/               # Individual tool handlers (bash, files, build, qna)
-│           ├── bash.ts
-│           ├── build-project.ts
-│           ├── delete-file.ts
-│           ├── qna.ts
-│           ├── read-file.ts
-│           ├── run-project.ts
-│           └── write-file.ts
-├── package.json
-└── tsconfig.json
-```
+![Anvilly System Architecture](../../anvilly-architecture.png)
+
+- **Client Layer (Next.js & Monaco IDE)**: Browser workspace where users enter prompts, inspect code in Monaco, and interact with the live iframe / Expo preview.
+- **Orchestration Layer (Express Backend)**: The central control unit coordinating user requests, the autonomous agent loop, and real-time SSE progress streaming.
+- **Intelligence Layer (DeepSeek API)**: The reasoning engine that plans application structures, writes code, and executes structured tool calls.
+- **Runtime Layer (E2B Cloud Sandboxes)**: Isolated, persistent cloud containers where code is executed, packages are installed, dev servers run, and Puppeteer captures screenshots.
+- **Persistence Layer (PostgreSQL & Redis)**: PostgreSQL stores users, projects, and metadata via Prisma, while Redis handles session state, sandbox status, and cache.
 
 ---
 
