@@ -1,31 +1,49 @@
 import { provider } from "../providers";
 import type { ChatMessage } from "../providers/types";
 import { getSystemPrompt } from "./prompt";
-import type { Message, MessageType, Role, ToolCall } from "./types";
-import { getMessages, messagesToChatMessages } from "./helper-functions";
+import type { Message, MessageType, Role, ToolCall, AiToolCallMessage } from "./types";
+import { getAgentState, messagesToChatMessages } from "./helper-functions";
+import { runCompactionPipeline, type CompactedStatePayload } from "./compaction";
 import type { EventStream } from "./event-stream";
 import { toolHandlers, tools } from "./tools";
 import type Sandbox from "@e2b/code-interpreter";
 import { prisma } from "@repo/db/client";
-import { storeInRedis } from "./redis";
+import { saveActiveSession, clearActiveSession, setAgentStateCache, invalidateChatCache } from "./redis";
 import { captureProjectScreenshot } from "./screenshot";
 
 const DEEPSEEK_MODEL = "deepseek-flash";
 
 export const agentLoop = async (eventStream: EventStream, userId:string, projectId:string , sandbox: Sandbox, userPrompt: string, template?: string) => {
 
-    const key = `${userId}-${projectId}`
+    const previousState: CompactedStatePayload | null = await getAgentState(userId, projectId);
 
-    const messages: Message[] = await getMessages(userId,projectId);
-    
-    const messagesLength = messages.length;
+    const activeTurnMessages: Message[] = [
+        { role: "USER", type: "TEXT", content: userPrompt }
+    ];
 
-    messages.push({ role: "USER",type:"TEXT",content: userPrompt });
-    await storeInRedis(key, messages);
+    const turnStartedAt = Date.now();
+
+    const syncActiveScratchpad = async () => {
+        const activeTools = activeTurnMessages.map((m) => {
+            if (m.type === "TOOL_CALL") {
+                return { name: (m as any).name, callId: (m as any).callId };
+            }
+            return { role: m.role, type: m.type };
+        });
+        await saveActiveSession(userId, projectId, {
+            turnStartedAt,
+            userPrompt,
+            inFlightTools: activeTools,
+        });
+    };
+
+    await syncActiveScratchpad();
 
     while (true) {
-        // Convert internal messages to OpenAI-compatible ChatMessage format
-        const chatMessages: ChatMessage[] = messagesToChatMessages(messages);
+        const chatMessages: ChatMessage[] = messagesToChatMessages(activeTurnMessages, {
+            previousState,
+            template,
+        });
 
         const response = await provider.chat({
             model: DEEPSEEK_MODEL,
@@ -36,8 +54,8 @@ export const agentLoop = async (eventStream: EventStream, userId:string, project
 
         if (response.text) {
             eventStream.send("text", response.text);
-            messages.push({ role: "AI",type:"TEXT",content: response.text, reasoning_content: response.reasoning_content });
-            await storeInRedis(key,messages)
+            activeTurnMessages.push({ role: "AI", type: "TEXT", content: response.text, reasoning_content: response.reasoning_content });
+            await syncActiveScratchpad();
         }
 
         let calledTool = false;
@@ -63,7 +81,7 @@ export const agentLoop = async (eventStream: EventStream, userId:string, project
             );
 
             for (const item of qnaResults) {
-                messages.push({
+                activeTurnMessages.push({
                     role: "AI",
                     type: "TOOL_CALL",
                     name: item.toolCall.name,
@@ -73,7 +91,7 @@ export const agentLoop = async (eventStream: EventStream, userId:string, project
                     reasoning_content: response.reasoning_content,
                 });
             }
-            await storeInRedis(key, messages);
+            await syncActiveScratchpad();
         }
 
         for (const toolCall of otherCalls) {
@@ -81,15 +99,15 @@ export const agentLoop = async (eventStream: EventStream, userId:string, project
             const handler = (toolHandlers as any)[toolCall.name];
 
             if (!handler) {
-                messages.push({ role: "AI", type: "TEXT", content: `Tool ${toolCall.name} not found` });
-                await storeInRedis(key, messages);
+                activeTurnMessages.push({ role: "AI", type: "TEXT", content: `Tool ${toolCall.name} not found` });
+                await syncActiveScratchpad();
                 continue;
             }
             eventStream.send("tool_call", { name: toolCall.name, arguments: toolCall.arguments });
             const result = await handler(sandbox, eventStream, toolCall.arguments, { userId, projectId });
             eventStream.send("tool_call_end", { name: toolCall.name });
             console.log(toolCall.name, " | ", JSON.stringify(toolCall.arguments), " | ", toolCall);
-            messages.push({
+            activeTurnMessages.push({
                 role: "AI",
                 type: "TOOL_CALL",
                 name: toolCall.name,
@@ -98,7 +116,7 @@ export const agentLoop = async (eventStream: EventStream, userId:string, project
                 result,
                 reasoning_content: response.reasoning_content,
             });
-            await storeInRedis(key, messages);
+            await syncActiveScratchpad();
         }
 
         if (!calledTool) {
@@ -106,21 +124,91 @@ export const agentLoop = async (eventStream: EventStream, userId:string, project
         }
     }
     eventStream.send("done", {});
-    const newMessages = messages.slice(messagesLength);
-    const data = newMessages.map((message)=>{
 
-        const value:{projectId:string,role:Role,type:MessageType,content:string,toolCall?:ToolCall} = {
-            projectId,
-            role: message.role,
-            type: message.type,
-            content: message.type==="TEXT" ? (message.content||""):JSON.stringify({arguments:message.arguments,callId:message.callId,result:message.result,content:message.content,reasoning_content:message.reasoning_content}),
-            toolCall: message.type==="TOOL_CALL" ? message.name.toUpperCase() as ToolCall : undefined,
-        };
-        return value;
-    })
-    await prisma.history.createMany({
-        data: [...data]
+    const currentTurnTools = activeTurnMessages.filter(
+        (m) => m.role === "AI" && m.type === "TOOL_CALL"
+    ) as AiToolCallMessage[];
+
+    const lastAiTextMessage = [...activeTurnMessages].reverse().find((m) => m.role === "AI" && m.type === "TEXT");
+    const aiResponseText = lastAiTextMessage?.content || "";
+
+    const previousTurnCount = previousState?.recentDialogue
+        ? (previousState.historySummary?.turnsCovered || 0) + previousState.recentDialogue.length
+        : 0;
+    const turnNumber = previousTurnCount + 1;
+
+    // Execute Tiered Compaction Pipeline (Tool eviction, Delta, Sliding Window, LLM Summarization)
+    const compactedPayload = await runCompactionPipeline({
+        previousState,
+        turnNumber,
+        userPrompt,
+        aiResponseText,
+        currentTurnTools,
     });
+
+    // Removal of raw tool calls
+    const recordsToSave: Array<{
+        projectId: string;
+        role: Role;
+        type: MessageType;
+        content: string;
+        toolCall?: ToolCall;
+    }> = [];
+
+    recordsToSave.push({
+        projectId,
+        role: "USER",
+        type: "TEXT",
+        content: userPrompt,
+    });
+
+    for (const msg of activeTurnMessages) {
+        if (msg.role === "AI" && msg.type === "TOOL_CALL" && (msg as AiToolCallMessage).name === "qna_tool") {
+            const qna = msg as AiToolCallMessage;
+            recordsToSave.push({
+                projectId,
+                role: "AI",
+                type: "TOOL_CALL",
+                content: JSON.stringify({ arguments: qna.arguments, callId: qna.callId, result: qna.result }),
+                toolCall: "QNA_TOOL",
+            });
+        }
+    }
+
+    if (aiResponseText) {
+        recordsToSave.push({
+            projectId,
+            role: "AI",
+            type: "TEXT",
+            content: aiResponseText,
+        });
+    }
+
+    recordsToSave.push({
+        projectId,
+        role: "AI",
+        type: "TOOL_CALL",
+        content: JSON.stringify(compactedPayload),
+        toolCall: "COMPACTED_STATE",
+    });
+
+    await prisma.$transaction([
+        prisma.history.deleteMany({
+            where: {
+                projectId,
+                toolCall: "COMPACTED_STATE",
+            },
+        }),
+        prisma.history.createMany({
+            data: recordsToSave,
+        }),
+    ]);
+
+    await clearActiveSession(userId, projectId);
+
+    await setAgentStateCache(userId, projectId, compactedPayload);
+
+    await invalidateChatCache(userId, projectId);
 
     if (template !== "node-react-native-expo") {
         try {

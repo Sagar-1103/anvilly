@@ -1,13 +1,13 @@
-import type { Request, Response, NextFunction } from "express"
+import type { Request, Response, NextFunction } from "express";
 import type { AiToolCallMessage, Message } from "./types";
 import type { ChatMessage } from "../providers/types";
-import { redisClient, storeInRedis } from "./redis";
+import { getAgentStateCache, setAgentStateCache, getChatCache, setChatCache } from "./redis";
 import { prisma } from "@repo/db/client";
-import type Sandbox from "@e2b/code-interpreter";
+import { formatProjectStateManifest, type CompactedStatePayload } from "./compaction";
 
-export const AsyncHandler = (fn: any) => async(req:Request, res:Response, next: NextFunction) => {
+export const AsyncHandler = (fn: any) => async (req: Request, res: Response, next: NextFunction) => {
     try {
-        await fn(req,res,next);
+        await fn(req, res, next);
     } catch (error) {
         console.error("Error in AsyncHandler:", error);
         if (res.headersSent) {
@@ -17,87 +17,167 @@ export const AsyncHandler = (fn: any) => async(req:Request, res:Response, next: 
             }
             return;
         }
-        return res.status(500).json({success:false, error: error instanceof Error ? error.message : error});
+        return res.status(500).json({ success: false, error: error instanceof Error ? error.message : error });
     }
-}
+};
 
-export const getUserId = (req:Request) => {
+export const getUserId = (req: Request) => {
     return req.userId;
-}
+};
 
-export const parseHistory = (messages: Message[]) => {
-    const history = messages.map((m) => {
-        if (m.role==="USER") {
-            return `ROLE:${m.role}, TYPE:${m.type}, CONTENT:${m.content}`;
-        } else {
-            if (m.type==="TEXT") {
-                return `ROLE:${m.role}, TYPE:${m.type}, CONTENT:${m.content}`;
-            }
-            return `ROLE:${m.role}, TYPE:${m.type},TOOL_NAME:${m.name}, ARGS:${JSON.stringify(m.arguments)}, CALL_ID:${m.callId}, RESULT:${JSON.stringify(m.result)}`
-        }
-    }).join("\n\n");
-    return history;
-}
-
-export const getMessages = async(userId:string,projectId:string) => {
-    let messages: Message[] = [];
-    const key = `${userId}-${projectId}`;
-    let redisMessages = null;
-    try {
-        redisMessages = await redisClient.get(key);
-    } catch (error) {
-        console.error("REDIS GET ERROR:", error);
+// Get compacted agent state from Redis or DB
+export const getAgentState = async (userId: string, projectId: string): Promise<CompactedStatePayload | null> => {
+    // 1. Check Redis cache
+    const cached = await getAgentStateCache(userId, projectId);
+    if (cached) {
+        return cached;
     }
-    
-    if (!redisMessages) {
-        const dbMessages = await prisma.history.findMany({
-            where:{
-                projectId,
-                project:{
-                    userId,
-                }
-            },
-        });
-        messages = dbMessages.map((msg)=>{
-            if (msg.type==="TOOL_CALL" && msg.toolCall) {
-                const parsed = JSON.parse(msg.content);
-                return {
-                    role:"AI",
-                    type:"TOOL_CALL",
-                    name:msg.toolCall.toLowerCase(),
-                    content: parsed.content,
-                    arguments: parsed.arguments,
-                    callId: parsed.callId,
-                    result: parsed.result,
-                    reasoning_content: parsed.reasoning_content ?? "",
-                };
-            } else {
-                return {
-                    role:msg.role==="AI"?"AI":"USER",
-                    type:"TEXT",
-                    content: msg.content,
-                    reasoning_content: "",
-                }
-            }
-        });
-        await storeInRedis(key,messages);
-    } else {
-        messages = JSON.parse(redisMessages);
+
+    // 2. Fallback to DB checkpoint
+    const record = await prisma.history.findFirst({
+        where: {
+            projectId,
+            toolCall: "COMPACTED_STATE",
+        },
+        orderBy: {
+            createdAt: "desc",
+        },
+    });
+
+    if (record) {
+        try {
+            const payload: CompactedStatePayload = JSON.parse(record.content);
+            await setAgentStateCache(userId, projectId, payload);
+            return payload;
+        } catch (error) {
+            console.error("Error parsing COMPACTED_STATE record from PostgreSQL:", error);
+        }
+    }
+
+    // 3. Fallback for older projects without compaction
+    const existingMessages = await prisma.history.findMany({
+        where: {
+            projectId,
+            project: { userId },
+        },
+        orderBy: { createdAt: "asc" },
+    });
+
+    if (existingMessages.length === 0) {
+        return null;
+    }
+
+    const userPrompts = existingMessages.filter((m) => m.role === "USER" && m.type === "TEXT");
+    const rootGoal = userPrompts[0]?.content || "Initial project goal";
+    const lastUserPrompt = userPrompts[userPrompts.length - 1]?.content || "";
+    const lastAiText = [...existingMessages].reverse().find((m) => m.role === "AI" && m.type === "TEXT")?.content || "";
+
+    const syntheticPayload: CompactedStatePayload = {
+        version: 1,
+        updatedAt: Date.now(),
+        rootGoal,
+        workspace: {
+            files: [],
+            buildPassing: true,
+            serverRunning: false,
+        },
+        historySummary: {
+            turnsCovered: Math.max(1, userPrompts.length - 1),
+            summary: "Prior conversation turns before context compaction.",
+            keyDecisions: [],
+        },
+        recentDialogue: lastUserPrompt ? [{
+            turn: userPrompts.length,
+            userPrompt: lastUserPrompt,
+            aiResponse: lastAiText,
+        }] : [],
+        toolReceipts: [],
+    };
+
+    await setAgentStateCache(userId, projectId, syntheticPayload);
+    return syntheticPayload;
+};
+
+// Get chat messages for the frontend UI
+export const getClientChatMessages = async (userId: string, projectId: string): Promise<Message[]> => {
+    // 1. Check Redis cache
+    const cached = await getChatCache(userId, projectId);
+    if (cached && Array.isArray(cached) && cached.length > 0) {
+        return cached;
+    }
+
+    // 2. Fetch from DB if cache miss
+    const dbMessages = await prisma.history.findMany({
+        where: {
+            projectId,
+            project: { userId },
+            OR: [
+                { toolCall: null },
+                { toolCall: { not: "COMPACTED_STATE" } },
+            ],
+        },
+        orderBy: { createdAt: "asc" },
+    });
+
+    const messages: Message[] = dbMessages.map((msg) => {
+        if (msg.type === "TOOL_CALL" && msg.toolCall) {
+            const parsed = JSON.parse(msg.content);
+            return {
+                role: "AI",
+                type: "TOOL_CALL",
+                name: msg.toolCall.toLowerCase(),
+                content: parsed.content || msg.content,
+                arguments: parsed.arguments || {},
+                callId: parsed.callId || `call-${msg.id}`,
+                result: parsed.result,
+                reasoning_content: parsed.reasoning_content ?? "",
+            };
+        }
+        return {
+            role: msg.role === "AI" ? "AI" : "USER",
+            type: "TEXT",
+            content: msg.content,
+            reasoning_content: "",
+        };
+    });
+
+    if (messages.length > 0) {
+        await setChatCache(userId, projectId, messages);
     }
 
     return messages;
-}
+};
 
-/**
- * Convert internal Message[] format to OpenAI-compatible ChatMessage[] for the provider.
- * Groups consecutive tool calls from the same assistant turn and pairs them with tool results.
- */
-export const messagesToChatMessages = (messages: Message[]): ChatMessage[] => {
+// Convert messages to provider format (adds state blueprint & last 2 turns)
+export const messagesToChatMessages = (
+    activeTurnMessages: Message[],
+    options?: { previousState?: CompactedStatePayload | null; template?: string }
+): ChatMessage[] => {
     const chatMessages: ChatMessage[] = [];
 
+    // 1. Inject state blueprint and last 2 turns
+    if (options?.previousState) {
+        const payload = options.previousState;
+
+        // Blueprint (files, goal, summary)
+        chatMessages.push({
+            role: "system",
+            content: formatProjectStateManifest(payload, options?.template),
+        });
+
+        // Last 2 turns verbatim
+        if (payload.recentDialogue && payload.recentDialogue.length > 0) {
+            for (const turn of payload.recentDialogue) {
+                chatMessages.push({ role: "user", content: turn.userPrompt });
+                chatMessages.push({ role: "assistant", content: turn.aiResponse });
+            }
+        }
+    }
+
+    // 2. Process current turn messages
     let i = 0;
-    while (i < messages.length) {
-        const msg = messages[i];
+    while (i < activeTurnMessages.length) {
+        const msg = activeTurnMessages[i];
         if (!msg) { i++; continue; }
 
         if (msg.role === "USER") {
@@ -112,7 +192,7 @@ export const messagesToChatMessages = (messages: Message[]): ChatMessage[] => {
             chatMessages.push(assistantMsg);
             i++;
         } else if (msg.type === "TOOL_CALL") {
-            // Collect consecutive tool calls into a single assistant message
+            // Group tool calls into one message
             const toolCalls: Array<{
                 id: string;
                 type: "function";
@@ -120,8 +200,8 @@ export const messagesToChatMessages = (messages: Message[]): ChatMessage[] => {
             }> = [];
             const toolResults: Array<{ tool_call_id: string; content: string }> = [];
 
-            let current = messages[i];
-            while (i < messages.length && current && current.role === "AI" && current.type === "TOOL_CALL") {
+            let current = activeTurnMessages[i];
+            while (i < activeTurnMessages.length && current && current.role === "AI" && current.type === "TOOL_CALL") {
                 const tc = current as AiToolCallMessage;
                 toolCalls.push({
                     id: tc.callId,
@@ -136,11 +216,10 @@ export const messagesToChatMessages = (messages: Message[]): ChatMessage[] => {
                     content: JSON.stringify(tc.result ?? ""),
                 });
                 i++;
-                current = messages[i];
+                current = activeTurnMessages[i];
             }
 
-            // Attach reasoning_content from the first tool call in this group (they share the same response)
-            const firstTc = messages[i - toolCalls.length] as AiToolCallMessage;
+            const firstTc = activeTurnMessages[i - toolCalls.length] as AiToolCallMessage;
             const assistantMsg: ChatMessage = {
                 role: "assistant",
                 content: null,
@@ -149,7 +228,6 @@ export const messagesToChatMessages = (messages: Message[]): ChatMessage[] => {
             };
             chatMessages.push(assistantMsg);
 
-            // Add corresponding tool result messages
             for (const result of toolResults) {
                 chatMessages.push({
                     role: "tool",
@@ -163,4 +241,4 @@ export const messagesToChatMessages = (messages: Message[]): ChatMessage[] => {
     }
 
     return chatMessages;
-}
+};

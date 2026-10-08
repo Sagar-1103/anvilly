@@ -215,6 +215,7 @@ export function useProjectIDE(projectId: string, onFileChange?: (toolName: strin
           setLiveThought("");
           if (!toolData?.name) return;
           if (toolData.name === "qna_tool") return;
+
           const actionId = `action-${Date.now()}-${Math.random()}`;
           setMessages((prev) => [
             ...prev,
@@ -259,7 +260,7 @@ export function useProjectIDE(projectId: string, onFileChange?: (toolName: strin
         (data: { name: string }) => {
           setMessages((prev) => {
             const idx = [...prev].reverse().findIndex(
-              (m) => m.role === "action" && m.actionType === data.name && !m.actionDone
+              (m) => m.role === "action" && m.actionType === data?.name && !m.actionDone
             );
             if (idx === -1) return prev;
             const realIdx = prev.length - 1 - idx;
@@ -405,26 +406,9 @@ export function useProjectIDE(projectId: string, onFileChange?: (toolName: strin
           setDevice("mobile");
         }
 
-        let chatMsgs: ChatMessage[] = (backendMessages || [])
+        const chatMsgs: ChatMessage[] = (backendMessages || [])
           .map((m: any, idx: number) => extractTextChatMessage(m, idx))
           .filter(Boolean) as ChatMessage[];
-          
-        // Post-process history: Keep only the LAST AI TEXT message to avoid huge text walls
-        // We iterate backwards to find the last assistant message
-        let lastAssistantMsgIndex = -1;
-        for (let i = chatMsgs.length - 1; i >= 0; i--) {
-            if (chatMsgs[i].role === "assistant") {
-                lastAssistantMsgIndex = i;
-                break;
-            }
-        }
-        
-        chatMsgs = chatMsgs.filter((msg, idx) => {
-            if (msg.role === "assistant") {
-                return idx === lastAssistantMsgIndex;
-            }
-            return true;
-        });
 
         if (chatMsgs.length > 0) {
           setMessages(chatMsgs);

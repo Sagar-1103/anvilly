@@ -1,7 +1,7 @@
 export type Role = "AI" | "USER";
 export type MessageType = "TEXT" | "TOOL_CALL";
 
-export type ToolCall = "BASH_TOOL" | "BUILD_PROJECT_TOOL" | "CREATE_FILE_TOOL" | "DELETE_FILE_TOOL" | "QNA_TOOL" | "READ_FILE_TOOL" | "RUN_PROJECT_TOOL" | "UPDATE_FILE_TOOL" | "WRITE_FILE_TOOL";
+export type ToolCall = "BASH_TOOL" | "BUILD_PROJECT_TOOL" | "CREATE_FILE_TOOL" | "DELETE_FILE_TOOL" | "QNA_TOOL" | "READ_FILE_TOOL" | "RUN_PROJECT_TOOL" | "UPDATE_FILE_TOOL" | "WRITE_FILE_TOOL" | "COMPACTED_STATE";
 
 interface UserMessage {
     role: "USER";

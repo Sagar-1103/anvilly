@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { AsyncHandler, getMessages, getUserId } from "../utils/helper-functions";
+import { AsyncHandler, getClientChatMessages, getAgentState, getUserId } from "../utils/helper-functions";
 import { answerQuestionSchema, createProjectSchema, updateProjectMetadataSchema, updateProjectSchema } from "../utils/project-schema";
 import { sendValidationError } from "../utils/validation";
 import { prisma } from "@repo/db/client";
@@ -13,6 +13,7 @@ import type { Message } from "../utils/types";
 import { pendingQuestions } from "../utils/tools/qna";
 import { ensureExpoRunning, initializeExpoSandbox } from "../utils/e2b/expo-sandbox";
 import { captureProjectScreenshot } from "../utils/screenshot";
+import { acquireAgentLock, releaseAgentLock, invalidateAgentState, invalidateChatCache, clearActiveSession } from "../utils/redis";
 
 export const createProject = AsyncHandler(async (req: Request, res: Response) => {
     const userId = getUserId(req);
@@ -121,15 +122,27 @@ export const updateProject = AsyncHandler(async(req:Request,res:Response) => {
         return res.status(403).json({ success: false, message: "Access denied. You do not have permission to update this project." });
     }
 
-    const eventStream = new EventStream(req, res);
-    eventStream.addHeaders();
+    const hasLock = await acquireAgentLock(userId, projectId);
+    if (!hasLock) {
+        return res.status(409).json({
+            success: false,
+            message: "Another prompt execution is currently in progress for this project. Please wait.",
+        });
+    }
 
-    const sandbox = await Sandbox.connect(project.sandboxId);
-    await sandbox.setTimeout(env.sandboxTimeoutMs);
+    try {
+        const eventStream = new EventStream(req, res);
+        eventStream.addHeaders();
 
-    await agentLoop(eventStream, userId, projectId, sandbox, userPrompt, project.template);
+        const sandbox = await Sandbox.connect(project.sandboxId);
+        await sandbox.setTimeout(env.sandboxTimeoutMs);
 
-    eventStream.end();
+        await agentLoop(eventStream, userId, projectId, sandbox, userPrompt, project.template);
+
+        eventStream.end();
+    } finally {
+        await releaseAgentLock(userId, projectId);
+    }
 });
 
 export const getProject = AsyncHandler(async (req: Request, res: Response) => {
@@ -157,7 +170,10 @@ export const getProject = AsyncHandler(async (req: Request, res: Response) => {
         return res.status(403).json({ success: false, message: "Access denied. You do not have permission to view this project." });
     }
 
-    const messages: Message[] = await getMessages(userId,projectId);
+    const [clientMessages, agentState] = await Promise.all([
+        getClientChatMessages(userId, projectId),
+        getAgentState(userId, projectId),
+    ]);
 
     let url = "";
     let expoUrl = "";
@@ -189,8 +205,10 @@ export const getProject = AsyncHandler(async (req: Request, res: Response) => {
         console.error("Error connecting to sandbox in getProject:", error);
     }
 
-    const hasDevServerStarted = messages.some(
-        (m) => m.type === "TOOL_CALL" && (m.name === "run_project_tool" || (m as any).toolCall === "RUN_PROJECT_TOOL")
+    const hasDevServerStarted = (agentState?.workspace?.serverRunning) ?? clientMessages.some(
+        (m) =>
+            m.type === "TOOL_CALL" &&
+            (m.name === "run_project_tool" || (m as any).toolCall === "RUN_PROJECT_TOOL")
     );
 
     const data = {
@@ -202,7 +220,7 @@ export const getProject = AsyncHandler(async (req: Request, res: Response) => {
         template: project.template,
         userPrompt: project.prompt,
         previewImage: project.previewImage,
-        messages,
+        messages: clientMessages,
         hasDevServerStarted,
     };
 
@@ -362,6 +380,12 @@ export const deleteProject = AsyncHandler(async (req: Request, res: Response) =>
             id: projectId,
         },
     });
+
+    await Promise.allSettled([
+        invalidateAgentState(userId, projectId),
+        invalidateChatCache(userId, projectId),
+        clearActiveSession(userId, projectId),
+    ]);
 
     return res.status(200).json({ success: true, message: "Project deleted successfully" });
 });
