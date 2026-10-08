@@ -1,16 +1,18 @@
-# Anvilly: Autonomous AI Full-Stack App Generator
+# Anvilly: AI Full-Stack App Generator
 
 Anvilly is an autonomous AI developer platform that transforms natural language prompts into production-ready web and mobile applications in seconds. It provisions isolated E2B cloud sandboxes, executes an iterative multi-step agent loop with live filesystem modifications and package installations, and provides an in-browser development environment complete with a multi-tab Monaco code editor, live iframe preview, Expo Go mobile preview via QR code tunnels, and human-in-the-loop interactive AI chat.
 
 <!-- Optional Badges / Links -->
-Live Site: [https://anvilly.com](https://anvilly.com) | Demo Video: [YouTube Demo](https://youtu.be/demo-video-link)
+Demo Video: [YouTube Demo](https://youtu.be/rD1jf3OR3is?si=PlAw13TwdDk6QJOL)
+
+
 
 ---
 
 ## Application Preview
 
 <!-- Add your application screenshots or demo GIFs below -->
-![Anvilly Landing Page & Prompt Forge](https://raw.githubusercontent.com/Sagar-1103/anvilly/main/apps/web/public/hero-aurora.webp)
+https://github.com/user-attachments/assets/597a9056-d5cc-4b85-9a8c-49389cee24fc
 
 <!-- Placeholder for additional previews:
 ![Anvilly Workspace](path/to/ide-preview.png)
