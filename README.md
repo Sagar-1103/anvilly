@@ -12,7 +12,11 @@ Demo Video: [YouTube Demo](https://youtu.be/rD1jf3OR3is?si=PlAw13TwdDk6QJOL)
 ## Application Preview
 
 <!-- Add your application screenshots or demo GIFs below -->
-https://github.com/user-attachments/assets/597a9056-d5cc-4b85-9a8c-49389cee24fc
+
+
+https://github.com/user-attachments/assets/048228ce-6d7d-4f8a-8a1a-f81ab08158a7
+
+
 
 <!-- Placeholder for additional previews:
 ![Anvilly Workspace](path/to/ide-preview.png)
