@@ -1,9 +1,6 @@
 generator client {
-  provider            = "prisma-client"
-  output              = "../generated/prisma"
-  runtime             = "bun"
-  moduleFormat        = "esm"
-  importFileExtension = "ts"
+  provider = "prisma-client"
+  output   = "../generated/prisma"
 }
 
 datasource db {
