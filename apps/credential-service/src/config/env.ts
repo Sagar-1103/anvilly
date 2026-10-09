@@ -16,7 +16,7 @@ const optionalEnv = <T>(key: string, defaultValue: T): string | T => {
 
 export const env = {
   port: Number(optionalEnv("PORT", 3002)),
-  host: require("HOST"),
+  host: optionalEnv("HOST", "0.0.0.0") as string,
   jwtSecret: requiredEnv("JWT_SECRET"),
   masterEncryptionKey: requiredEnv("MASTER_ENCRYPTION_KEY"),
   internalServiceSecret: requiredEnv("INTERNAL_SERVICE_SECRET"),

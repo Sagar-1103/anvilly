@@ -4,13 +4,17 @@
     "target": "ESNext",
     "module": "Preserve",
     "moduleDetection": "force",
+    "types": ["bun"],
+    "typeRoots": [
+      "./node_modules/@types",
+      "../../node_modules/@types"
+    ],
     "allowJs": true,
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
     "noEmit": true,
     "strict": true,
-    "skipLibCheck": true,
-    "types": ["bun-types"]
+    "skipLibCheck": true
   }
 }
