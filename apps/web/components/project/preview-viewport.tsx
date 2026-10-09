@@ -30,6 +30,11 @@ export default function PreviewViewport({
   const isExpo = project?.template === "node_react_native_expo";
   const isMobileView = isExpo || device === "mobile";
 
+  const safeProjectUrl =
+    projectUrl && projectUrl.startsWith("http://") && typeof window !== "undefined" && (window.location.protocol === "https:" || projectUrl.includes(".e2b.app"))
+      ? projectUrl.replace(/^http:\/\//i, "https://")
+      : projectUrl;
+
   return (
     <div className="flex-1 overflow-auto bg-[#151518] relative flex items-center justify-center p-4">
       {activeTab === "preview" ? (
@@ -73,10 +78,10 @@ export default function PreviewViewport({
                       <PreviewBuildingState />
                     </div>
                   ) : (
-                    projectUrl && (
+                    safeProjectUrl && (
                       <iframe
                         ref={iframeRef}
-                        src={projectUrl}
+                        src={safeProjectUrl}
                         className="w-full flex-1 border-0 bg-white animate-in fade-in duration-300"
                         title="Preview"
                       />
@@ -97,10 +102,10 @@ export default function PreviewViewport({
               {!isPreviewReady ? (
                 <PreviewBuildingState />
               ) : (
-                projectUrl && (
+                safeProjectUrl && (
                   <iframe
                     ref={iframeRef}
-                    src={projectUrl}
+                    src={safeProjectUrl}
                     className="w-full h-full border-0 bg-white animate-in fade-in duration-300"
                     title="Preview"
                   />
@@ -113,10 +118,10 @@ export default function PreviewViewport({
             {!isPreviewReady ? (
               <PreviewBuildingState />
             ) : (
-              projectUrl && (
+              safeProjectUrl && (
                 <iframe
                   ref={iframeRef}
-                  src={projectUrl}
+                  src={safeProjectUrl}
                   className="w-full h-full border-0 bg-white animate-in fade-in duration-300"
                   title="Preview"
                 />

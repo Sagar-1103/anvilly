@@ -421,9 +421,22 @@ export function useProjectIDE(projectId: string, onFileChange?: (toolName: strin
           userPrompt,
           hasDevServerStarted,
         } = res.data;
+        let formattedUrl = (url || "").trim();
+        if (formattedUrl) {
+          if (!formattedUrl.startsWith("http://") && !formattedUrl.startsWith("https://")) {
+            formattedUrl = `https://${formattedUrl}`;
+          } else if (
+            formattedUrl.startsWith("http://") &&
+            typeof window !== "undefined" &&
+            (window.location.protocol === "https:" || formattedUrl.includes(".e2b.app"))
+          ) {
+            formattedUrl = formattedUrl.replace(/^http:\/\//i, "https://");
+          }
+        }
+
         setProject({
           id: projectId,
-          url: url || "",
+          url: formattedUrl,
           title: title || "",
           description: description || "",
           expoUrl,

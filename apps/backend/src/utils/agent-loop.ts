@@ -292,7 +292,7 @@ export const agentLoop = async (
         try {
             const host = sandbox.getHost(3000);
             if (host) {
-                const targetUrl = "http://" + host;
+                const targetUrl = "https://" + host;
                 captureProjectScreenshot(projectId, targetUrl).catch((err) => {
                     console.log("Background screenshot error:", err);
                 });

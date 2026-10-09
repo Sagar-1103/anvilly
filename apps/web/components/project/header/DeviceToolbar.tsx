@@ -27,7 +27,11 @@ export default function DeviceToolbar({
 
   const openProjectUrl = () => {
     if (!projectUrl || !isPreviewReady) return;
-    window.open(projectUrl, "_blank");
+    const safeUrl =
+      projectUrl.startsWith("http://") && typeof window !== "undefined" && (window.location.protocol === "https:" || projectUrl.includes(".e2b.app"))
+        ? projectUrl.replace(/^http:\/\//i, "https://")
+        : projectUrl;
+    window.open(safeUrl, "_blank");
   };
 
   const isExpo = template === "node_react_native_expo";

@@ -282,7 +282,7 @@ export const getProject = async (
         });
       }
     } else {
-      url = "http://" + sandbox.getHost(3000);
+      url = "https://" + sandbox.getHost(3000);
       if (!project.previewImage && url) {
         captureProjectScreenshot(projectId, url).catch(() => {});
       }
@@ -415,7 +415,7 @@ export const pingProject = async (
         console.error("Expo services failed to start on existing sandbox:", expoError);
       }
     } else {
-      url = sandbox.getHost(3000);
+      url = "https://" + sandbox.getHost(3000);
     }
   } catch (error) {
     console.error("Sandbox connect failed, recreating:", (error as Error).message);
@@ -436,7 +436,7 @@ export const pingProject = async (
         console.error("Expo init failed on new sandbox:", expoError);
       }
     } else {
-      url = sandbox.getHost(3000);
+      url = "https://" + sandbox.getHost(3000);
     }
 
     project = await prisma.project.update({
