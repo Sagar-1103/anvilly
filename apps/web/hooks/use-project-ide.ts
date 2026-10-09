@@ -381,9 +381,11 @@ export function useProjectIDE(projectId: string, onFileChange?: (toolName: strin
             : m
         )
       );
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error submitting question answer:", err);
-      toast.error("Failed to submit answer");
+      const msg = err.response?.data?.message || "Failed to submit answer";
+      toast.error(msg);
+      throw err;
     }
   };
 

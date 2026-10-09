@@ -1,5 +1,6 @@
 import type { EventType } from "./types";
 import { env } from "../constants/env";
+import { getCorsHeaders } from "../lib/cors";
 
 export class EventStream {
   private writer: WritableStreamDefaultWriter<Uint8Array>;
@@ -55,6 +56,10 @@ export class EventStream {
       }
     }
 
+    const corsHeaders = getCorsHeaders(
+      reqOrSignal instanceof Request ? reqOrSignal : undefined
+    );
+
     this.response = new Response(readable, {
       status: 200,
       headers: {
@@ -62,8 +67,7 @@ export class EventStream {
         "Cache-Control": "no-cache, no-transform",
         "Connection": "keep-alive",
         "X-Accel-Buffering": "no",
-        "Access-Control-Allow-Origin": env.corsOrigin,
-        "Access-Control-Allow-Credentials": "true",
+        ...corsHeaders,
       },
     });
   }

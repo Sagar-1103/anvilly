@@ -4,6 +4,7 @@ import { getCorsHeaders } from "../src/lib/cors";
 
 const server = Bun.serve({
   port: env.port,
+  idleTimeout: 0,
   async fetch(req: Request) {
     const res = await app.handle(req);
     if (res) return res;

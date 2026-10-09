@@ -69,7 +69,7 @@ export const qnaToolHandler = async (
         return new Promise<string>((resolve) => {
             const pingIntervalId = setInterval(() => {
                 eventStream.sendPing();
-            }, 15000);
+            }, 5000);
 
             const timeoutId = setTimeout(() => {
                 cleanupAndResolve(fallbackResponse);
@@ -86,7 +86,7 @@ export const qnaToolHandler = async (
             };
 
             const onClose = () => {
-                cleanupAndResolve(fallbackResponse);
+                clearInterval(pingIntervalId);
             };
 
             eventStream.req.once("close", onClose);

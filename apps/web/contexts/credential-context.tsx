@@ -133,6 +133,77 @@ function clearCachedData() {
   }
 }
 
+const SELECTED_CRED_KEY = "anvilly_selected_cred_id";
+const PROVIDER_MODELS_KEY = "anvilly_provider_models";
+
+function getStoredCredentialId(userId: string): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    return localStorage.getItem(`${SELECTED_CRED_KEY}_${userId}`);
+  } catch {
+    return null;
+  }
+}
+
+function setStoredCredentialId(userId: string, id: string | null) {
+  if (typeof window === "undefined") return;
+  try {
+    if (id) {
+      localStorage.setItem(`${SELECTED_CRED_KEY}_${userId}`, id);
+    } else {
+      localStorage.removeItem(`${SELECTED_CRED_KEY}_${userId}`);
+    }
+  } catch {}
+}
+
+function getStoredProviderModels(userId: string): Record<string, string> {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = localStorage.getItem(`${PROVIDER_MODELS_KEY}_${userId}`);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+function setStoredProviderModel(userId: string, key: string, model: string) {
+  if (typeof window === "undefined") return;
+  try {
+    const map = getStoredProviderModels(userId);
+    map[key] = model;
+    localStorage.setItem(`${PROVIDER_MODELS_KEY}_${userId}`, JSON.stringify(map));
+  } catch {}
+}
+
+function resolveSelection(
+  list: CredentialItem[],
+  userId: string | null,
+  currentCredId?: string | null
+): { credId: string | null; model: string | null } {
+  if (!list.length) {
+    return { credId: null, model: null };
+  }
+
+  const storedId = userId ? getStoredCredentialId(userId) : null;
+  const target =
+    (currentCredId && list.find((c) => c.id === currentCredId)) ||
+    (storedId && list.find((c) => c.id === storedId)) ||
+    list[0]!;
+
+  const storedModels = userId ? getStoredProviderModels(userId) : {};
+  const preferredModel =
+    storedModels[target.id] ||
+    storedModels[target.provider] ||
+    target.model ||
+    PROVIDER_DISPLAY_INFO[target.provider]?.defaultModel ||
+    null;
+
+  return {
+    credId: target.id,
+    model: preferredModel,
+  };
+}
+
 export function CredentialProvider({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession();
   const userId = (session?.user as any)?.id || session?.user?.email || null;
@@ -167,15 +238,14 @@ export function CredentialProvider({ children }: { children: React.ReactNode }) 
         const cached = getCachedData(userId);
         if (cached) {
           setCredentials(cached);
-          setSelectedCredentialId((prev) => {
-            if (prev && cached.some((c) => c.id === prev)) return prev;
-            const first = cached[0];
-            if (first) {
-              setSelectedModel(first.model || PROVIDER_DISPLAY_INFO[first.provider]?.defaultModel || null);
-              return first.id;
-            }
-            return null;
-          });
+          const sel = resolveSelection(cached, userId, selectedCredentialId);
+          if (sel.credId) {
+            setSelectedCredentialId(sel.credId);
+            setStoredCredentialId(userId, sel.credId);
+          }
+          if (sel.model) {
+            setSelectedModel(sel.model);
+          }
           return;
         }
       }
@@ -185,6 +255,14 @@ export function CredentialProvider({ children }: { children: React.ReactNode }) 
         try {
           const data = await activeFetchPromise;
           setCredentials(data);
+          const sel = resolveSelection(data, userId, selectedCredentialId);
+          if (sel.credId) {
+            setSelectedCredentialId(sel.credId);
+            setStoredCredentialId(userId, sel.credId);
+          }
+          if (sel.model) {
+            setSelectedModel(sel.model);
+          }
         } catch {
           // Handled in original fetch
         }
@@ -214,73 +292,130 @@ export function CredentialProvider({ children }: { children: React.ReactNode }) 
       const result = await activeFetchPromise;
       setCredentials(result);
 
-      setSelectedCredentialId((prev) => {
-        if (prev && result.some((c) => c.id === prev)) {
-          return prev;
-        }
-        const first = result[0];
-        if (first) {
-          setSelectedModel(first.model || PROVIDER_DISPLAY_INFO[first.provider]?.defaultModel || null);
-          return first.id;
-        }
-        return null;
-      });
+      const sel = resolveSelection(result, userId, selectedCredentialId);
+      if (sel.credId) {
+        setSelectedCredentialId(sel.credId);
+        setStoredCredentialId(userId, sel.credId);
+      }
+      if (sel.model) {
+        setSelectedModel(sel.model);
+      }
     },
-    [status, userId]
+    [status, userId, selectedCredentialId]
   );
 
   useEffect(() => {
     fetchCredentials();
   }, [fetchCredentials]);
 
-  const addOrUpdateCredential = useCallback((item: CredentialItem) => {
-    setCredentials((prev) => {
-      const idx = prev.findIndex((c) => c.id === item.id);
-      let updated: CredentialItem[];
-      if (idx >= 0) {
-        updated = [...prev];
-        updated[idx] = item;
-      } else {
-        updated = [item, ...prev];
-      }
+  const addOrUpdateCredential = useCallback(
+    (item: CredentialItem) => {
+      setCredentials((prev) => {
+        const idx = prev.findIndex((c) => c.id === item.id);
+        let updated: CredentialItem[];
+        if (idx >= 0) {
+          updated = [...prev];
+          updated[idx] = item;
+        } else {
+          updated = [item, ...prev];
+        }
+        if (userId) {
+          setCachedData(userId, updated);
+        }
+        return updated;
+      });
+
+      setSelectedCredentialId(item.id);
       if (userId) {
-        setCachedData(userId, updated);
+        setStoredCredentialId(userId, item.id);
       }
-      return updated;
-    });
-
-    setSelectedCredentialId(item.id);
-    if (item.model) {
-      setSelectedModel(item.model);
-    }
-  }, [userId]);
-
-  const removeCredential = useCallback((id: string) => {
-    setCredentials((prev) => {
-      const updated = prev.filter((c) => c.id !== id);
-      if (userId) {
-        setCachedData(userId, updated);
+      const modelToSet =
+        item.model || PROVIDER_DISPLAY_INFO[item.provider]?.defaultModel || null;
+      if (modelToSet) {
+        setSelectedModel(modelToSet);
+        if (userId) {
+          setStoredProviderModel(userId, item.provider, modelToSet);
+          setStoredProviderModel(userId, item.id, modelToSet);
+        }
       }
-      return updated;
-    });
+    },
+    [userId]
+  );
 
-    setSelectedCredentialId((prevId) => (prevId === id ? null : prevId));
-  }, [userId]);
+  const removeCredential = useCallback(
+    (id: string) => {
+      setCredentials((prev) => {
+        const updated = prev.filter((c) => c.id !== id);
+        if (userId) {
+          setCachedData(userId, updated);
+        }
+        return updated;
+      });
+
+      setSelectedCredentialId((prevId) => {
+        if (prevId === id) {
+          if (userId) setStoredCredentialId(userId, null);
+          return null;
+        }
+        return prevId;
+      });
+    },
+    [userId]
+  );
 
   const activeCredential =
     credentials.find((c) => c.id === selectedCredentialId) || credentials[0] || null;
 
-  const handleSelectCredential = (id: string | null) => {
-    setSelectedCredentialId(id);
-    const target = credentials.find((c) => c.id === id);
-    if (target?.model) {
-      setSelectedModel(target.model);
-    } else if (target) {
-      setSelectedModel(PROVIDER_DISPLAY_INFO[target.provider]?.defaultModel || null);
-    } else {
-      setSelectedModel(null);
-    }
-  };
+  const handleSelectCredential = useCallback(
+    (id: string | null) => {
+      setSelectedCredentialId(id);
+      if (userId) {
+        setStoredCredentialId(userId, id);
+      }
+
+      if (!id) {
+        setSelectedModel(null);
+        return;
+      }
+
+      const target = credentials.find((c) => c.id === id);
+      if (!target) return;
+
+      const storedModels = userId ? getStoredProviderModels(userId) : {};
+      const preferredModel =
+        storedModels[target.id] ||
+        storedModels[target.provider] ||
+        target.model ||
+        PROVIDER_DISPLAY_INFO[target.provider]?.defaultModel ||
+        null;
+
+      setSelectedModel(preferredModel);
+    },
+    [credentials, userId]
+  );
+
+  const handleSetActiveModel = useCallback(
+    (model: string) => {
+      const cleanModel = model.trim();
+      if (!cleanModel) return;
+
+      setSelectedModel(cleanModel);
+
+      if (activeCredential && userId) {
+        setStoredProviderModel(userId, activeCredential.provider, cleanModel);
+        setStoredProviderModel(userId, activeCredential.id, cleanModel);
+
+        setCredentials((prev) => {
+          const updated = prev.map((c) =>
+            c.id === activeCredential.id ? { ...c, model: cleanModel } : c
+          );
+          setCachedData(userId, updated);
+          return updated;
+        });
+      }
+    },
+    [activeCredential, userId]
+  );
 
   const activeModel =
     selectedModel ||
@@ -319,7 +454,7 @@ export function CredentialProvider({ children }: { children: React.ReactNode }) 
         setSelectedCredentialId: handleSelectCredential,
         activeCredential,
         activeModel,
-        setActiveModel: setSelectedModel,
+        setActiveModel: handleSetActiveModel,
         hasModel,
         isLoading,
         isModalOpen,

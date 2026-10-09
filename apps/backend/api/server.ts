@@ -1,6 +1,7 @@
 import app from "../src/app";
 import { env } from "../src/constants/env";
 import { connectRedis } from "../src/utils/redis";
+import { getCorsHeaders } from "../src/lib/cors";
 
 // Connect Redis
 connectRedis().catch((err) => {
@@ -9,6 +10,7 @@ connectRedis().catch((err) => {
 
 const server = Bun.serve({
   port: env.port,
+  idleTimeout: 0,
   async fetch(req: Request) {
     const res = await app.handle(req);
     if (res) return res;
@@ -18,7 +20,7 @@ const server = Bun.serve({
       {
         status: 404,
         headers: {
-          "Access-Control-Allow-Origin": env.corsOrigin,
+          ...getCorsHeaders(req),
           "Content-Type": "application/json",
         },
       }
