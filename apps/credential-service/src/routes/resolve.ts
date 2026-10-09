@@ -1,4 +1,4 @@
-import { prisma } from "@repo/db/client";
+import { prisma } from "@repo/db";
 import { z } from "zod";
 import { env } from "../config/env";
 import { decryptSecret } from "../crypto/cipher";
