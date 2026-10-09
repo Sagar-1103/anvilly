@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "bun run api/server.ts",
-    "build": "bun build api/server.ts --target node --outdir dist",
+    "build": "bun build api/server.ts --outdir dist --target bun",
     "start": "bun api/server.ts",
     "check-types": "tsc --noEmit"
   },
