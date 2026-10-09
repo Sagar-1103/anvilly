@@ -13,3 +13,4 @@ export const prisma = new PrismaClient({
 
 export { PrismaClient, Prisma };
 export * from "../generated/prisma/client";
+export * from "../generated/prisma/enums";
