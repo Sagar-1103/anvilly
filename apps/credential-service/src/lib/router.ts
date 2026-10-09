@@ -1,3 +1,5 @@
+import { env } from "../config/env";
+
 export type RouteHandler = (req: Request, params?: any) => Promise<Response> | Response;
 
 export class Router {
@@ -35,7 +37,7 @@ export class Router {
     if (method === "OPTIONS") {
       return new Response(null, {
         headers: {
-          "Access-Control-Allow-Origin": process.env.CORS_ORIGIN || "*",
+          "Access-Control-Allow-Origin": env.corsOrigin,
           "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
           "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Internal-Secret",
           "Access-Control-Allow-Credentials": "true",
@@ -67,7 +69,7 @@ export class Router {
             }
             const res = await handler(req, params);
             if (res && res.headers) {
-              res.headers.set("Access-Control-Allow-Origin", process.env.CORS_ORIGIN || "*");
+              res.headers.set("Access-Control-Allow-Origin", env.corsOrigin);
               res.headers.set("Access-Control-Allow-Credentials", "true");
             }
             return res;
@@ -77,7 +79,7 @@ export class Router {
               {
                 status: err.statusCode || 500,
                 headers: {
-                  "Access-Control-Allow-Origin": process.env.CORS_ORIGIN || "*",
+                  "Access-Control-Allow-Origin": env.corsOrigin,
                   "Access-Control-Allow-Credentials": "true",
                 },
               }
