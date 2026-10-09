@@ -14,9 +14,16 @@ const optionalEnv = <T>(key: string, defaultValue: T): string | T => {
   return value !== undefined ? value : defaultValue;
 };
 
+const parseCorsOrigins = (value: string): string[] => {
+  return value
+    .split(",")
+    .map((o) => o.trim().replace(/\/+$/, ""))
+    .filter(Boolean);
+};
+
 export const env = {
   port: Number(optionalEnv("PORT", 3002)),
-  corsOrigin: optionalEnv("CORS_ORIGIN", "*") as string,
+  corsOrigins: parseCorsOrigins(requiredEnv("CORS_ORIGINS")),
   jwtSecret: requiredEnv("JWT_SECRET"),
   masterEncryptionKey: requiredEnv("MASTER_ENCRYPTION_KEY"),
   internalServiceSecret: requiredEnv("INTERNAL_SERVICE_SECRET"),

@@ -13,7 +13,8 @@
     "MASTER_ENCRYPTION_KEY",
     "INTERNAL_SERVICE_SECRET",
     "CREDENTIAL_SERVICE_URL",
-    "CORS_ORIGIN"
+    "CORS_ORIGIN",
+    "CORS_ORIGINS"
   ],
   "tasks": {
     "build": {

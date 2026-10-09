@@ -1,4 +1,4 @@
-import { env } from "../config/env";
+import { getCorsHeaders } from "./cors";
 
 export type RouteHandler = (req: Request, params?: any) => Promise<Response> | Response;
 
@@ -33,15 +33,12 @@ export class Router {
   async handle(req: Request): Promise<Response | null> {
     const url = new URL(req.url);
     const method = req.method;
+    const corsHeaders = getCorsHeaders(req);
 
     if (method === "OPTIONS") {
       return new Response(null, {
-        headers: {
-          "Access-Control-Allow-Origin": env.corsOrigin,
-          "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
-          "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Internal-Secret",
-          "Access-Control-Allow-Credentials": "true",
-        },
+        status: 204,
+        headers: corsHeaders,
       });
     }
 
@@ -69,8 +66,9 @@ export class Router {
             }
             const res = await handler(req, params);
             if (res && res.headers) {
-              res.headers.set("Access-Control-Allow-Origin", env.corsOrigin);
-              res.headers.set("Access-Control-Allow-Credentials", "true");
+              for (const [key, value] of Object.entries(corsHeaders)) {
+                res.headers.set(key, value);
+              }
             }
             return res;
           } catch (err: any) {
@@ -78,10 +76,7 @@ export class Router {
               { success: false, message: err.message || "Internal server error" },
               {
                 status: err.statusCode || 500,
-                headers: {
-                  "Access-Control-Allow-Origin": env.corsOrigin,
-                  "Access-Control-Allow-Credentials": "true",
-                },
+                headers: corsHeaders,
               }
             );
           }

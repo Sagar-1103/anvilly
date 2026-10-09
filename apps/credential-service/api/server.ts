@@ -1,5 +1,6 @@
 import app from "../src/app";
 import { env } from "../src/config/env";
+import { getCorsHeaders } from "../src/lib/cors";
 
 const server = Bun.serve({
   port: env.port,
@@ -10,7 +11,7 @@ const server = Bun.serve({
     return new Response(JSON.stringify({ success: false, message: "Route not found" }), {
       status: 404,
       headers: {
-        "Access-Control-Allow-Origin": env.corsOrigin,
+        ...getCorsHeaders(req),
         "Content-Type": "application/json",
       },
     });
