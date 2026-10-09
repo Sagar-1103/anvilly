@@ -79,8 +79,9 @@ PORT=3001
 CORS_ORIGIN=http://localhost:3000
 JWT_SECRET=your_jwt_secret_key_minimum_32_characters
 
-# AI Provider
-DEEPSEEK_API_KEY=your_deepseek_api_key
+# Credential Service Platform (Required)
+CREDENTIAL_SERVICE_URL=http://127.0.0.1:3002
+INTERNAL_SERVICE_SECRET=your_internal_service_secret
 
 # E2B Sandbox Platform
 E2B_API_KEY=your_e2b_api_key
@@ -88,7 +89,12 @@ SANDBOX_TIMEOUT_MS=240000
 
 # Cache
 REDIS_URL=redis://localhost:6379
-REDIS_TTL=3600000
+
+# Redis Cache TTLs (Optional - defaults shown in seconds)
+SESSION_TTL_SECONDS=900          # 15 minutes
+STATE_CACHE_TTL_SECONDS=604800   # 7 days
+CHAT_CACHE_TTL_SECONDS=3600      # 1 hour
+LOCK_TTL_SECONDS=120             # 2 minutes
 
 # Database Connection (Prisma)
 DATABASE_URL=postgresql://username:password@localhost:5432/anvilly_db
@@ -104,7 +110,7 @@ DATABASE_URL=postgresql://username:password@localhost:5432/anvilly_db
 - **PostgreSQL**: Running instance with migrations applied (`bunx prisma db push`)
 - **Redis**: Running instance (local or hosted)
 - **E2B API Key**: From [e2b.dev](https://e2b.dev)
-- **DeepSeek API Key**: From [platform.deepseek.com](https://platform.deepseek.com)
+- **AI Provider API Key**: OpenAI, DeepSeek, or OpenRouter key (configured in user vault)
 
 ### Installation & Run
 

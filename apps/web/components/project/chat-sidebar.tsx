@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Sidebar } from "@/components/ui/sidebar";
 import { ChatMessage, Project } from "@/lib/types";
+import { useCredentials } from "@/contexts/credential-context";
 import ChatSidebarHeader from "./chat/ChatSidebarHeader";
 import ChatMessageList from "./chat/ChatMessageList";
 import ChatPromptInput from "./chat/ChatPromptInput";
@@ -12,7 +13,7 @@ interface ChatSidebarProps {
   messages: ChatMessage[];
   busy: boolean;
   liveThought?: string;
-  sendPrompt: (userPrompt: string) => Promise<void>;
+  sendPrompt: (userPrompt: string, alreadyAddedInState?: boolean, credentialId?: string, model?: string) => Promise<void>;
   onAnswerSubmit?: (questionId: string, answer: string) => Promise<void>;
 }
 
@@ -25,13 +26,14 @@ export default function ChatSidebar({
   onAnswerSubmit,
 }: ChatSidebarProps) {
   const [prompt, setPrompt] = useState("");
+  const { activeCredential, activeModel } = useCredentials();
 
   const handleSend = async (e?: React.FormEvent) => {
     e?.preventDefault();
     const txt = prompt.trim();
     if (!txt || busy) return;
     setPrompt("");
-    await sendPrompt(txt);
+    await sendPrompt(txt, false, activeCredential?.id, activeModel);
   };
 
   return (

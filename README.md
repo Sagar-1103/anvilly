@@ -119,8 +119,9 @@ PORT=3001
 CORS_ORIGIN=http://localhost:3000
 JWT_SECRET=your_jwt_secret_key_minimum_32_characters
 
-# AI & LLM Providers
-DEEPSEEK_API_KEY=your_deepseek_api_key
+# Credential Service Platform (Required)
+CREDENTIAL_SERVICE_URL=http://127.0.0.1:3002
+INTERNAL_SERVICE_SECRET=your_internal_service_secret
 
 # E2B Sandbox Platform
 E2B_API_KEY=your_e2b_api_key
@@ -128,9 +129,26 @@ SANDBOX_TIMEOUT_MS=240000
 
 # Cache & Storage
 REDIS_URL=redis://localhost:6379
-REDIS_TTL=3600000
+
+# Redis Cache TTLs (Optional - defaults shown in seconds)
+SESSION_TTL_SECONDS=900          # 15 minutes
+STATE_CACHE_TTL_SECONDS=604800   # 7 days
+CHAT_CACHE_TTL_SECONDS=3600      # 1 hour
+LOCK_TTL_SECONDS=120             # 2 minutes
 
 # Database Connection (Prisma)
+DATABASE_URL=postgresql://username:password@localhost:5432/anvilly_db
+```
+
+#### Credential Service Configuration
+Create a `.env` file inside `apps/credential-service/`:
+
+```env
+PORT=3002
+HOST=127.0.0.1
+JWT_SECRET=your_jwt_secret_key_minimum_32_characters
+MASTER_ENCRYPTION_KEY=your_64_char_hex_encryption_key
+INTERNAL_SERVICE_SECRET=your_internal_service_secret
 DATABASE_URL=postgresql://username:password@localhost:5432/anvilly_db
 ```
 
@@ -139,6 +157,7 @@ Create a `.env` file inside `apps/web/`:
 
 ```env
 NEXT_PUBLIC_BACKEND_URL=http://localhost:3001
+CREDENTIAL_SERVICE_URL=http://127.0.0.1:3002
 NEXTAUTH_URL=http://localhost:3000
 JWT_SECRET=your_jwt_secret_key_minimum_32_characters
 

@@ -23,10 +23,10 @@ const STATE_CACHE_PREFIX = "cache:state:";
 const CHAT_CACHE_PREFIX = "cache:chat:";
 const AGENT_LOCK_PREFIX = "lock:agent:";
 
-const SESSION_TTL_SECONDS = 15 * 60; // 15 mins
-const STATE_CACHE_TTL_SECONDS = 7 * 24 * 60 * 60; // 7 days
-const CHAT_CACHE_TTL_SECONDS = 60 * 60; // 1 hour
-const LOCK_TTL_SECONDS = 2 * 60; // 2 mins
+const SESSION_TTL_SECONDS = env.sessionTtlSeconds;
+const STATE_CACHE_TTL_SECONDS = env.stateCacheTtlSeconds;
+const CHAT_CACHE_TTL_SECONDS = env.chatCacheTtlSeconds;
+const LOCK_TTL_SECONDS = env.lockTtlSeconds;
 
 // Agent state cache
 export const getAgentStateCache = async (userId: string, projectId: string): Promise<CompactedStatePayload | null> => {

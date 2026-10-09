@@ -15,6 +15,7 @@ model User {
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
   projects  Project[]
+  apiKeys   UserApiKey[]
 }
 
 model Project {
@@ -57,4 +58,28 @@ model History {
   content   String
   toolCall  String?
   createdAt DateTime     @default(now())
+}
+
+model UserApiKey {
+  id           String    @id @default(uuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  provider     String    
+  model        String?   
+  label        String?   
+  keyPreview   String    
+  
+  ciphertext   String
+  iv           String
+  authTag      String
+  keyVersion   Int       @default(1)
+  
+  isActive     Boolean   @default(true)
+  lastUsedAt   DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@unique([userId, provider])
+  @@index([userId])
 }

@@ -24,6 +24,10 @@ const jakartaFont = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.NEXTAUTH_URL ||
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000")
+  ),
   title: "Anvilly - Forge Stunning Apps with AI",
   description:
     "Anvilly transforms your words into production-ready applications. No coding required. Just describe your vision and watch it come to life. The AI-powered app builder that forges ideas into reality.",

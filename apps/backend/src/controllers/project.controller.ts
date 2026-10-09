@@ -6,7 +6,7 @@ import { prisma } from "@repo/db/client";
 import { env } from "../constants/env";
 import Sandbox from "@e2b/code-interpreter";
 import { agentLoop } from "../utils/agent-loop";
-import { provider } from "../providers";
+import { getProviderForUser, type LLMProvider } from "../providers";
 import { EventStream } from "../utils/event-stream";
 import { getTitleAndDescriptionPrompt, parseTitleAndDescription } from "../utils/prompt";
 import type { Message } from "../utils/types";
@@ -14,6 +14,7 @@ import { pendingQuestions } from "../utils/tools/qna";
 import { ensureExpoRunning, initializeExpoSandbox } from "../utils/e2b/expo-sandbox";
 import { captureProjectScreenshot } from "../utils/screenshot";
 import { acquireAgentLock, releaseAgentLock, invalidateAgentState, invalidateChatCache, clearActiveSession } from "../utils/redis";
+import { classifyLLMError } from "../utils/llm-error-handler";
 
 export const createProject = AsyncHandler(async (req: Request, res: Response) => {
     const userId = getUserId(req);
@@ -28,14 +29,24 @@ export const createProject = AsyncHandler(async (req: Request, res: Response) =>
         return;
     }
 
-    const { userPrompt, template = "bun_react_shadcn" } = parsedBody.data;
+    const { userPrompt, template = "bun_react_shadcn", provider: preferredProvider, credentialId, model } = parsedBody.data;
 
     let title = "Untitled Project";
     let description = userPrompt.slice(0, 100).trim();
 
+    let activeProvider: LLMProvider;
+    let activeModel = "deepseek-chat";
     try {
-        const titleAndDescRaw = await provider.generateText({
-            model: "deepseek-flash",
+        const userProviderResult = await getProviderForUser(userId, { credentialId, provider: preferredProvider, model });
+        activeProvider = userProviderResult.provider;
+        activeModel = userProviderResult.defaultModel;
+    } catch (e: any) {
+        return res.status(400).json({ success: false, message: e.message || "Please configure your API key in Account Settings." });
+    }
+
+    try {
+        const titleAndDescRaw = await activeProvider.generateText({
+            model: activeModel,
             prompt: getTitleAndDescriptionPrompt(userPrompt),
         });
         const parsed = parseTitleAndDescription(titleAndDescRaw, userPrompt);
@@ -106,7 +117,7 @@ export const updateProject = AsyncHandler(async(req:Request,res:Response) => {
         return;
     }
 
-    const { userPrompt } = parsedBody.data;
+    const { userPrompt, provider: preferredProvider, credentialId, model } = parsedBody.data;
 
     const project = await prisma.project.findUnique({
         where: {
@@ -122,6 +133,13 @@ export const updateProject = AsyncHandler(async(req:Request,res:Response) => {
         return res.status(403).json({ success: false, message: "Access denied. You do not have permission to update this project." });
     }
 
+    let userProviderResult;
+    try {
+        userProviderResult = await getProviderForUser(userId, { credentialId, provider: preferredProvider, model });
+    } catch (e: any) {
+        return res.status(400).json({ success: false, message: e.message || "Please configure your API key in Account Settings." });
+    }
+
     const hasLock = await acquireAgentLock(userId, projectId);
     if (!hasLock) {
         return res.status(409).json({
@@ -130,17 +148,31 @@ export const updateProject = AsyncHandler(async(req:Request,res:Response) => {
         });
     }
 
+    const eventStream = new EventStream(req, res);
     try {
-        const eventStream = new EventStream(req, res);
         eventStream.addHeaders();
 
         const sandbox = await Sandbox.connect(project.sandboxId);
         await sandbox.setTimeout(env.sandboxTimeoutMs);
 
-        await agentLoop(eventStream, userId, projectId, sandbox, userPrompt, project.template);
-
-        eventStream.end();
+        await agentLoop(
+            eventStream,
+            userId,
+            projectId,
+            sandbox,
+            userPrompt,
+            project.template,
+            userProviderResult.provider,
+            userProviderResult.defaultModel
+        );
+    } catch (err: any) {
+        console.error("Unhandled error in prompt execution:", err);
+        const classified = classifyLLMError(err, userProviderResult.providerName);
+        eventStream.send("error", classified);
+        eventStream.send("text", classified.markdownMessage);
+        eventStream.send("done", {});
     } finally {
+        eventStream.end();
         await releaseAgentLock(userId, projectId);
     }
 });

@@ -1,5 +1,4 @@
 import type { Message, AiToolCallMessage } from "./types";
-import { provider } from "../providers";
 
 export interface ToolReceipt {
     name: string;
@@ -176,10 +175,22 @@ export function evictToolResults(tools: AiToolCallMessage[]): ToolReceipt[] {
 // Summarize older conversation turns with an LLM
 export async function summarizeOlderTurns(
     existingSummary: HistorySummary | undefined,
-    turnsToSummarize: DialogueTurn[]
+    turnsToSummarize: DialogueTurn[],
+    llmProvider?: any,
+    modelName?: string
 ): Promise<HistorySummary> {
     if (turnsToSummarize.length === 0) {
         return existingSummary || { turnsCovered: 0, summary: "", keyDecisions: [] };
+    }
+
+    if (!llmProvider) {
+        const fallbackLines = turnsToSummarize.map((t) => `Turn ${t.turn}: "${t.userPrompt}" -> ${t.aiResponse.slice(0, 80)}...`);
+        const newTurnsCovered = (existingSummary?.turnsCovered || 0) + turnsToSummarize.length;
+        return {
+            turnsCovered: newTurnsCovered,
+            summary: (existingSummary?.summary ? `${existingSummary.summary}\n` : "") + fallbackLines.join("\n"),
+            keyDecisions: existingSummary?.keyDecisions || [],
+        };
     }
 
     const turnsText = turnsToSummarize
@@ -209,8 +220,9 @@ Respond strictly in valid JSON with this exact schema:
 }`;
 
     try {
-        const rawResponse = await provider.generateText({
-            model: "deepseek-flash",
+        const effectiveModel = modelName || llmProvider?.defaultModel || "deepseek-chat";
+        const rawResponse = await llmProvider.generateText({
+            model: effectiveModel,
             prompt,
         });
 
@@ -246,11 +258,13 @@ export interface PipelineParams {
     userPrompt: string;
     aiResponseText: string;
     currentTurnTools: AiToolCallMessage[];
+    llmProvider?: any;
+    modelName?: string;
 }
 
 // Run compaction after each turn
 export async function runCompactionPipeline(params: PipelineParams): Promise<CompactedStatePayload> {
-    const { previousState, turnNumber, userPrompt, aiResponseText, currentTurnTools } = params;
+    const { previousState, turnNumber, userPrompt, aiResponseText, currentTurnTools, llmProvider, modelName } = params;
 
     // 1. Simplify tool results
     const toolReceipts = evictToolResults(currentTurnTools);
@@ -327,7 +341,7 @@ export async function runCompactionPipeline(params: PipelineParams): Promise<Com
         recentDialogue = allDialogueTurns.slice(-2);
         // Summarize turns older than last 2
         const turnsToSummarize = allDialogueTurns.slice(0, -2);
-        historySummary = await summarizeOlderTurns(previousState?.historySummary, turnsToSummarize);
+        historySummary = await summarizeOlderTurns(previousState?.historySummary, turnsToSummarize, llmProvider, modelName);
     }
 
     // 5. Build final compacted state

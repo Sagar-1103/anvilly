@@ -3,6 +3,9 @@
 import PlatformTabs from "./PlatformTabs";
 import SuggestionChips, { SuggestionItem } from "./SuggestionChips";
 import GenerateButton from "./GenerateButton";
+import ModelSelectorChip from "@/components/shared/ModelSelectorChip";
+import { useCredentials } from "@/contexts/credential-context";
+import { useSession } from "next-auth/react";
 
 interface PromptCardProps {
   promptValue: string;
@@ -23,6 +26,8 @@ export default function PromptCard({
   quickSuggestions,
   onSendPrompt,
 }: PromptCardProps) {
+  const { status } = useSession();
+  const { hasModel } = useCredentials();
   return (
     <div className="relative z-10 mt-14 w-full max-w-2xl animate-fade-in-up stagger-3">
       <div className="relative group rounded-3xl p-0.5 bg-linear-to-b from-violet-500/50 via-zinc-800/30 to-zinc-800/60 shadow-2xl shadow-black/80 transition-all duration-300 hover:from-violet-500/60 focus-within:from-violet-500/65 focus-within:to-zinc-800/60">
@@ -65,6 +70,7 @@ export default function PromptCard({
           {/* Bottom Action Bar */}
           <div className="flex items-center justify-between pt-3 mt-2 border-t border-zinc-800/40">
             <div className="flex items-center gap-2">
+              <ModelSelectorChip size="sm" />
               {promptValue && (
                 <button
                   type="button"
@@ -78,7 +84,11 @@ export default function PromptCard({
 
             <GenerateButton
               isLoading={isLoading}
-              disabled={isLoading || !promptValue.trim()}
+              disabled={
+                isLoading ||
+                !promptValue.trim() ||
+                (status === "authenticated" && !hasModel)
+              }
               onClick={onSendPrompt}
             />
           </div>

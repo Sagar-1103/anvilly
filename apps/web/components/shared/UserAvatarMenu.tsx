@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useSession, signOut } from "next-auth/react";
-import { LogOut } from "lucide-react";
+import { LogOut, Key } from "lucide-react";
 import LogoutConfirmModal from "./LogoutConfirmModal";
+import { useCredentials } from "@/contexts/credential-context";
 
 interface UserAvatarMenuProps {
   size?: "sm" | "md";
@@ -19,6 +20,7 @@ export default function UserAvatarMenu({
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { data: session } = useSession();
+  const { openModal } = useCredentials();
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -89,6 +91,19 @@ export default function UserAvatarMenu({
                 Signed in
               </p>
             </div>
+
+            {/* API Keys */}
+            <button
+              type="button"
+              onClick={() => {
+                setDropdownOpen(false);
+                openModal();
+              }}
+              className="w-full text-left px-4 py-2.5 text-xs text-zinc-300 hover:text-white hover:bg-zinc-800/60 active:bg-zinc-800 transition-all duration-150 cursor-pointer flex items-center gap-2 group border-b border-zinc-800/40"
+            >
+              <Key className="w-3.5 h-3.5 text-zinc-400 group-hover:text-violet-400 transition-colors" />
+              <span>API Keys</span>
+            </button>
 
             {/* Logout Button */}
             <button

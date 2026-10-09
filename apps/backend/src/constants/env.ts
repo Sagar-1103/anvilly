@@ -14,13 +14,24 @@ const optionalEnv = <T>(key: string, defaultValue: T): string | T => {
     return value || defaultValue;
 }
 
+const optionalNumberEnv = (key: string, defaultValue: number): number => {
+    const value = process.env[key];
+    if (!value) return defaultValue;
+    const parsed = Number(value);
+    return isNaN(parsed) ? defaultValue : parsed;
+}
+
 export const env = {
-    port: optionalEnv("PORT", 3001) as number,
+    port: optionalNumberEnv("PORT", 3001),
     corsOrigin: requiredEnv("CORS_ORIGIN"),
     jwtSecret: requiredEnv("JWT_SECRET"),
     e2bApiKey: requiredEnv("E2B_API_KEY"),
-    sandboxTimeoutMs: optionalEnv("SANDBOX_TIMEOUT_MS", 4 * 1000 * 60) as number,
+    sandboxTimeoutMs: optionalNumberEnv("SANDBOX_TIMEOUT_MS", 4 * 1000 * 60),
     redisUrl: requiredEnv("REDIS_URL"),
-    redisTtl: optionalEnv("REDIS_TTL",60*1000*60) as number,
-    deepseekApiKey: requiredEnv("DEEPSEEK_API_KEY"),
+    sessionTtlSeconds: optionalNumberEnv("SESSION_TTL_SECONDS", 15 * 60), // 15 mins
+    stateCacheTtlSeconds: optionalNumberEnv("STATE_CACHE_TTL_SECONDS", 7 * 24 * 60 * 60), // 7 days
+    chatCacheTtlSeconds: optionalNumberEnv("CHAT_CACHE_TTL_SECONDS", 60 * 60), // 1 hour
+    lockTtlSeconds: optionalNumberEnv("LOCK_TTL_SECONDS", 2 * 60), // 2 mins
+    credentialServiceUrl: requiredEnv("CREDENTIAL_SERVICE_URL"),
+    internalServiceSecret: requiredEnv("INTERNAL_SERVICE_SECRET"),
 }

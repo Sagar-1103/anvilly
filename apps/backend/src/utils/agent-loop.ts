@@ -1,4 +1,4 @@
-import { provider } from "../providers";
+import type { LLMProvider } from "../providers";
 import type { ChatMessage } from "../providers/types";
 import { getSystemPrompt } from "./prompt";
 import type { Message, MessageType, Role, ToolCall, AiToolCallMessage } from "./types";
@@ -10,10 +10,21 @@ import type Sandbox from "@e2b/code-interpreter";
 import { prisma } from "@repo/db/client";
 import { saveActiveSession, clearActiveSession, setAgentStateCache, invalidateChatCache } from "./redis";
 import { captureProjectScreenshot } from "./screenshot";
+import { classifyLLMError } from "./llm-error-handler";
 
-const DEEPSEEK_MODEL = "deepseek-flash";
+const DEFAULT_MODEL = "deepseek-chat";
 
-export const agentLoop = async (eventStream: EventStream, userId:string, projectId:string , sandbox: Sandbox, userPrompt: string, template?: string) => {
+export const agentLoop = async (
+    eventStream: EventStream,
+    userId: string,
+    projectId: string,
+    sandbox: Sandbox,
+    userPrompt: string,
+    template: string | undefined,
+    llmProvider: LLMProvider,
+    modelName?: string
+) => {
+    const activeModel = modelName || (llmProvider as any)?.defaultModel || DEFAULT_MODEL;
 
     const previousState: CompactedStatePayload | null = await getAgentState(userId, projectId);
 
@@ -45,12 +56,77 @@ export const agentLoop = async (eventStream: EventStream, userId:string, project
             template,
         });
 
-        const response = await provider.chat({
-            model: DEEPSEEK_MODEL,
-            systemPrompt: getSystemPrompt(template),
-            messages: chatMessages,
-            tools: tools,
-        });
+        let response;
+        try {
+            response = await llmProvider.chat({
+                model: activeModel,
+                systemPrompt: getSystemPrompt(template),
+                messages: chatMessages,
+                tools: tools,
+            });
+        } catch (chatError: any) {
+            console.error("LLM Provider error in agentLoop:", chatError);
+            const providerName = (llmProvider as any)?.providerName || "AI Provider";
+            const classified = classifyLLMError(chatError, providerName);
+
+            // 1. Notify frontend via SSE
+            eventStream.send("error", classified);
+            eventStream.send("text", classified.markdownMessage);
+            eventStream.send("done", {});
+
+            // 2. Persist turn cleanly to database so user prompt and AI explanation are saved
+            try {
+                const recordsToSave: Array<{
+                    projectId: string;
+                    role: Role;
+                    type: MessageType;
+                    content: string;
+                    toolCall?: ToolCall;
+                }> = [
+                    {
+                        projectId,
+                        role: "USER",
+                        type: "TEXT",
+                        content: userPrompt,
+                    },
+                ];
+
+                // Include any prior tools executed in this turn before the error occurred
+                for (const msg of activeTurnMessages) {
+                    if (msg.role === "AI" && msg.type === "TOOL_CALL" && (msg as AiToolCallMessage).name === "qna_tool") {
+                        const qna = msg as AiToolCallMessage;
+                        recordsToSave.push({
+                            projectId,
+                            role: "AI",
+                            type: "TOOL_CALL",
+                            content: JSON.stringify({ arguments: qna.arguments, callId: qna.callId, result: qna.result }),
+                            toolCall: "QNA_TOOL",
+                        });
+                    }
+                }
+
+                // Add the AI error explanation as an assistant message
+                recordsToSave.push({
+                    projectId,
+                    role: "AI",
+                    type: "TEXT",
+                    content: classified.markdownMessage,
+                });
+
+                await prisma.history.createMany({
+                    data: recordsToSave,
+                });
+            } catch (dbErr) {
+                console.error("Failed to save error record to history:", dbErr);
+            }
+
+            // 3. Clean up Redis active session and invalidate cache
+            await clearActiveSession(userId, projectId);
+            await invalidateChatCache(userId, projectId);
+
+            // Cleanly exit the agent loop
+            return;
+        }
 
         if (response.text) {
             eventStream.send("text", response.text);
@@ -75,7 +151,7 @@ export const agentLoop = async (eventStream: EventStream, userId:string, project
                         { userId, projectId }
                     );
                     eventStream.send("tool_call_end", { name: toolCall.name });
-                    console.log(toolCall.name, " | ", JSON.stringify(toolCall.arguments), " | ", toolCall);
+                    // console.log(toolCall.name, " | ", JSON.stringify(toolCall.arguments), " | ", toolCall);
                     return { toolCall, result };
                 })
             );
@@ -144,6 +220,8 @@ export const agentLoop = async (eventStream: EventStream, userId:string, project
         userPrompt,
         aiResponseText,
         currentTurnTools,
+        llmProvider,
+        modelName: activeModel,
     });
 
     // Removal of raw tool calls

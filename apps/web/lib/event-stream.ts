@@ -9,6 +9,7 @@ export const processStream = async (
   onToolCallEnd?: (data: { name: string }) => void,
   onDone?: () => void,
   onRestartProject?: () => void,
+  onError?: (errorData: any) => void,
 ) => {
     const decoder = new TextDecoder("utf-8");
     let buffer = "";
@@ -28,6 +29,10 @@ export const processStream = async (
             const eventName = eventMatch ? eventMatch[1].trim() : "text";
             try {
               const data = JSON.parse(dataMatch[1]);
+
+              if (eventName === "error" && onError) {
+                onError(data);
+              }
 
               if (eventName === "text" && onText) {
                 const textContent = typeof data === "string" ? data : (data.content || data.text || JSON.stringify(data));

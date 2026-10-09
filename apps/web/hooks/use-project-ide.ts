@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { BACKEND_URL } from "@/lib/config";
 import { processStream } from "@/lib/event-stream";
 import { ChatMessage, Project } from "@/lib/types";
+import { useCredentials } from "@/contexts/credential-context";
 
 function getActionLabel(toolName: string, args: any): string {
   const cleanTool = String(toolName || "").toLowerCase();
@@ -131,6 +132,7 @@ function extractTextChatMessage(m: any, idx: number): ChatMessage | null {
 
 export function useProjectIDE(projectId: string, onFileChange?: (toolName: string, args: any) => void) {
   const { data: session, status } = useSession();
+  const { activeCredential, activeModel } = useCredentials();
   const [device, setDevice] = useState<"desktop" | "tablet" | "mobile">("desktop");
   const [activeTab, setActiveTab] = useState<"preview" | "code">("preview");
   const [project, setProject] = useState<Project>({ title: "", url: "" });
@@ -160,7 +162,9 @@ export function useProjectIDE(projectId: string, onFileChange?: (toolName: strin
 
   const sendPrompt = async (
     userPrompt: string,
-    alreadyAddedInState: boolean = false
+    alreadyAddedInState: boolean = false,
+    credentialId?: string,
+    model?: string
   ) => {
     if (!userPrompt.trim() || busy) return;
 
@@ -183,11 +187,36 @@ export function useProjectIDE(projectId: string, onFileChange?: (toolName: strin
           Authorization: `Bearer ${session?.jwtToken}`,
         },
         method: "POST",
-        body: JSON.stringify({ userPrompt }),
+        body: JSON.stringify({
+          userPrompt,
+          credentialId: credentialId || activeCredential?.id,
+          model: model || activeModel,
+        }),
       });
 
       if (!response.ok) {
-        toast.error("Failed to start project generation");
+        const errorData = await response.json().catch(() => null);
+        const errorMsg = errorData?.message || "Failed to start project generation";
+        const isRateLimit = response.status === 429 || errorMsg.toLowerCase().includes("rate limit") || errorMsg.toLowerCase().includes("429");
+        
+        toast.error(isRateLimit ? "Rate Limit Exceeded" : (errorData?.title || "Request Failed"), {
+          description: isRateLimit ? "Rate limit reached on API provider. Please wait a few seconds or switch models." : errorMsg,
+          duration: 6000,
+        });
+
+        const formattedContent = isRateLimit
+          ? `**Rate Limit Reached (HTTP 429)**\n\nThe request was rate-limited by the provider. This typically happens when using free-tier models or exceeding requests-per-minute limits.\n\n**Suggested actions:**\n- **Wait 15–30 seconds** and resend your prompt.\n- **Switch model/provider** using the selector below (e.g. DeepSeek or OpenAI).\n- **Add a dedicated API key** with higher rate limits in your **API Settings**.`
+          : `**Generation Error**\n\n${errorMsg}`;
+
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `error-${Date.now()}`,
+            role: "assistant",
+            content: formattedContent,
+          },
+        ]);
+
         setBusy(false);
         setLiveThought("");
         return;
@@ -276,7 +305,7 @@ export function useProjectIDE(projectId: string, onFileChange?: (toolName: strin
             const resolved = prev.map((m) =>
               m.role === "action" && !m.actionDone ? { ...m, actionDone: true } : m
             );
-            if (latestText) {
+            if (latestText && !resolved.some((m) => m.content === latestText)) {
               return [
                 ...resolved,
                 { id: `assistant-${Date.now()}`, role: "assistant", content: latestText },
@@ -287,6 +316,29 @@ export function useProjectIDE(projectId: string, onFileChange?: (toolName: strin
         },
         () => {
           setIsPreviewReady(true);
+        },
+        (errorData: any) => {
+          setLiveThought("");
+          const title = errorData?.title || "Provider Error";
+          const desc = errorData?.toastMessage || errorData?.message || "Please wait a moment or switch models.";
+          toast.error(title, {
+            description: desc,
+            duration: 7000,
+          });
+
+          if (errorData?.markdownMessage) {
+            latestText = errorData.markdownMessage;
+            setMessages((prev) => {
+              if (prev.some((m) => m.content === errorData.markdownMessage)) return prev;
+              const resolved = prev.map((m) =>
+                m.role === "action" && !m.actionDone ? { ...m, actionDone: true } : m
+              );
+              return [
+                ...resolved,
+                { id: `assistant-error-${Date.now()}`, role: "assistant", content: errorData.markdownMessage },
+              ];
+            });
+          }
         }
       );
     } catch (error) {

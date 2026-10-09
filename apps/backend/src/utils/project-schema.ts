@@ -3,6 +3,9 @@ import { z } from "zod";
 export const createProjectSchema = z.object({
     userPrompt: z.string().min(1,"User prompt is required"),
     template: z.enum(["bun_react_shadcn", "node_react_native_expo"]).optional().default("bun_react_shadcn"),
+    provider: z.string().optional(),
+    credentialId: z.string().optional(),
+    model: z.string().optional(),
 });
 
 export const answerQuestionSchema = z.object({
@@ -12,6 +15,9 @@ export const answerQuestionSchema = z.object({
 
 export const updateProjectSchema = z.object({
     userPrompt: z.string(),
+    provider: z.string().optional(),
+    credentialId: z.string().optional(),
+    model: z.string().optional(),
 });
 
 export const updateProjectMetadataSchema = z.object({
