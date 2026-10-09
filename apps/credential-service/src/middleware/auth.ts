@@ -24,7 +24,8 @@ export function authenticateUser(req: Request): string | null {
   try {
     const decoded = jwt.verify(token, env.jwtSecret) as TokenPayload;
     return decoded.id || decoded.userId || null;
-  } catch {
+  } catch (err: any) {
+    console.warn(`[Auth] JWT verify failed: ${err?.message}`);
     return null;
   }
 }

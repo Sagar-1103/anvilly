@@ -98,7 +98,17 @@ export const authOptions = {
         newToken.id = user.id;
       }
 
-      if (!newToken.jwtToken && newToken.email) {
+      let hasValidJwt = false;
+      if (newToken.jwtToken && process.env.JWT_SECRET) {
+        try {
+          jwt.verify(newToken.jwtToken, process.env.JWT_SECRET);
+          hasValidJwt = true;
+        } catch {
+          hasValidJwt = false;
+        }
+      }
+
+      if (!hasValidJwt && newToken.email) {
         try {
           const dbUser = await prismaClient.user.upsert({
             where: { email: newToken.email },
@@ -111,9 +121,9 @@ export const authOptions = {
           newToken.id = String(dbUser.id);
 
           const payload = { id: dbUser.id };
-          const jwt = await generateJWT(payload);
+          const freshJwt = await generateJWT(payload);
 
-          newToken.jwtToken = jwt;
+          newToken.jwtToken = freshJwt;
         } catch (error) {
           console.error("Error generating jwtToken in jwt callback:", error);
         }
