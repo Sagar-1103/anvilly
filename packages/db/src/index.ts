@@ -7,10 +7,11 @@ const adapter = new PrismaPg({
   connectionString: process.env.DATABASE_URL!,
 });
 
-export const prisma = new PrismaClient({
+const prisma = new PrismaClient({
   adapter,
 });
 
-export { PrismaClient, Prisma };
+
+export { prisma, PrismaClient, Prisma };
 export * from "../generated/prisma/client";
 export * from "../generated/prisma/enums";
