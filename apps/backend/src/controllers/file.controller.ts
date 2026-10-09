@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import { AsyncHandler, getUserId } from "../utils/helper-functions";
-import { prisma } from "@repo/db/client";
+import { prisma } from "@repo/db";
 import { env } from "../constants/env";
 import Sandbox from "@e2b/code-interpreter";
 

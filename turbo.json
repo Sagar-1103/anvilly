@@ -12,7 +12,8 @@
     "DISCORD_CLIENT_SECRET",
     "MASTER_ENCRYPTION_KEY",
     "INTERNAL_SERVICE_SECRET",
-    "CREDENTIAL_SERVICE_URL"
+    "CREDENTIAL_SERVICE_URL",
+    "CORS_ORIGIN"
   ],
   "tasks": {
     "build": {
@@ -27,7 +28,8 @@
         ".next/**",
         "!.next/cache/**",
         "!.next/dev/**",
-        "src/generated/**"
+        "src/generated/**",
+        "dist/**"
       ]
     },
     "lint": {

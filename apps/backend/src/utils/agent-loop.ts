@@ -7,7 +7,7 @@ import { runCompactionPipeline, type CompactedStatePayload } from "./compaction"
 import type { EventStream } from "./event-stream";
 import { toolHandlers, tools } from "./tools";
 import type Sandbox from "@e2b/code-interpreter";
-import { prisma } from "@repo/db/client";
+import { prisma } from "@repo/db";
 import { saveActiveSession, clearActiveSession, setAgentStateCache, invalidateChatCache } from "./redis";
 import { captureProjectScreenshot } from "./screenshot";
 import { classifyLLMError } from "./llm-error-handler";

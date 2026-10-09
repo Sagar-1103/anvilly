@@ -1,5 +1,5 @@
 import puppeteer from "puppeteer";
-import { prisma } from "@repo/db/client";
+import { prisma } from "@repo/db";
 
 export async function captureProjectScreenshot(
     projectId: string,

@@ -2,7 +2,7 @@ import type { Request, Response } from "express";
 import { AsyncHandler, getClientChatMessages, getAgentState, getUserId } from "../utils/helper-functions";
 import { answerQuestionSchema, createProjectSchema, updateProjectMetadataSchema, updateProjectSchema } from "../utils/project-schema";
 import { sendValidationError } from "../utils/validation";
-import { prisma } from "@repo/db/client";
+import { prisma } from "@repo/db";
 import { env } from "../constants/env";
 import Sandbox from "@e2b/code-interpreter";
 import { agentLoop } from "../utils/agent-loop";

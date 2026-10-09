@@ -1,13 +1,22 @@
 {
   "name": "@repo/db",
-  "module": "index.ts",
-  "type": "module",
   "private": true,
-  "exports":{
-    "./client":"./src/index.ts"
-  },
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "module": "./src/index.ts",
   "scripts": {
-    "build":"bunx prisma generate"
+    "generate": "bunx prisma generate",
+    "build": "bun run generate && bun build ./src/index.ts --outdir ./dist --target=node --external=\"*\""
+  },
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./client": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
   },
   "devDependencies": {
     "@types/bun": "latest",

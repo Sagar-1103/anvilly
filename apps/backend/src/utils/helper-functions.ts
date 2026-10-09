@@ -2,7 +2,7 @@ import type { Request, Response, NextFunction } from "express";
 import type { AiToolCallMessage, Message } from "./types";
 import type { ChatMessage } from "../providers/types";
 import { getAgentStateCache, setAgentStateCache, getChatCache, setChatCache } from "./redis";
-import { prisma } from "@repo/db/client";
+import { prisma } from "@repo/db";
 import { formatProjectStateManifest, type CompactedStatePayload } from "./compaction";
 
 export const AsyncHandler = (fn: any) => async (req: Request, res: Response, next: NextFunction) => {
