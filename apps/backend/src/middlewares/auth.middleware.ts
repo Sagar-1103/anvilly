@@ -1,36 +1,50 @@
-import type { Request, Response, NextFunction } from "express"
 import jwt from "jsonwebtoken";
 import { env } from "../constants/env";
 
 interface TokenPayload {
-    id: string,
+  id?: string;
+  userId?: string;
+  email?: string;
 }
 
-declare global {
-    namespace Express {
-        interface Request {
-            userId?:string;
-        }
-    }
+// Verify token
+export function authenticateUser(req: Request): string | null {
+  const authHeader = req.headers.get("authorization");
+  if (!authHeader) return null;
+
+  const parts = authHeader.split(" ");
+  if (parts.length !== 2 || parts[0]?.toLowerCase() !== "bearer") {
+    return null;
+  }
+
+  const token = parts[1];
+  if (!token) return null;
+
+  try {
+    const decoded = jwt.verify(token, env.jwtSecret) as TokenPayload;
+    return decoded.id || decoded.userId || null;
+  } catch {
+    return null;
+  }
 }
 
-export const requireAuth = async(req:Request, res:Response, next:NextFunction) => {
-    try {
-        const token = req.headers["authorization"]?.split("Bearer ")?.[1];
-        
-        if (!token) {
-            return res.status(403).json({success:false,message:"Access token required"});
-        }
-
-        const decodedToken = jwt.verify(token,env.jwtSecret) as TokenPayload;
-
-        if (!decodedToken || !decodedToken.id) {
-            return res.status(403).json({success:false,message:"Invalid token"});
-        }
-
-        req.userId = decodedToken.id;
-        next();
-    } catch (error) {
-        return res.status(403).json({success:false,message:"Invalid token"})
+// Auth guard
+export function requireAuth(
+  handler: (
+    req: Request,
+    params: Record<string, string>,
+    userId?: string
+  ) => Promise<Response> | Response
+) {
+  return async (req: Request, params: Record<string, string>) => {
+    const userId = authenticateUser(req);
+    if (!userId) {
+      return Response.json(
+        { success: false, message: "Unauthorized: Invalid or missing token" },
+        { status: 401 }
+      );
     }
+    (req as any).userId = userId;
+    return handler(req, params, userId);
+  };
 }

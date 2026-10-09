@@ -1,22 +1,28 @@
-import { Router } from "express";
-import { answerQuestion, createProject, deleteProject, getProject, getProjects, pingProject, updateProject, updateProjectMetadata } from "../controllers/project.controller";
+import { Router } from "../lib/router";
+import {
+  answerQuestion,
+  createProject,
+  deleteProject,
+  getProject,
+  getProjects,
+  pingProject,
+  updateProject,
+  updateProjectMetadata,
+} from "../controllers/project.controller";
 import { getFileTree, readFileContent } from "../controllers/file.controller";
 import { requireAuth } from "../middlewares/auth.middleware";
 
-const projectRouter = Router();
+const projectRouter = new Router();
 
-projectRouter.use(requireAuth);
+projectRouter.post("/", requireAuth(createProject));
+projectRouter.get("/", requireAuth(getProjects));
+projectRouter.post("/answer", requireAuth(answerQuestion));
+projectRouter.get("/:projectId/files", requireAuth(getFileTree));
+projectRouter.get("/:projectId/files/read", requireAuth(readFileContent));
+projectRouter.get("/:projectId", requireAuth(getProject));
+projectRouter.post("/:projectId", requireAuth(updateProject));
+projectRouter.patch("/:projectId", requireAuth(updateProjectMetadata));
+projectRouter.delete("/:projectId", requireAuth(deleteProject));
+projectRouter.get("/ping/:projectId", requireAuth(pingProject));
 
-projectRouter.post("/",createProject);
-projectRouter.get("/",getProjects);
-projectRouter.post("/answer", answerQuestion);
-projectRouter.get("/:projectId/files", getFileTree);
-projectRouter.get("/:projectId/files/read", readFileContent);
-projectRouter.get("/:projectId",getProject);
-projectRouter.post("/:projectId",updateProject);
-projectRouter.patch("/:projectId", updateProjectMetadata);
-projectRouter.delete("/:projectId",deleteProject);
-projectRouter.get("/ping/:projectId",pingProject);
-
-
-export default projectRouter
+export default projectRouter;

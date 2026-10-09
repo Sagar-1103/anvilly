@@ -1,28 +1,24 @@
-import type { Request, Response, NextFunction } from "express";
 import type { AiToolCallMessage, Message } from "./types";
 import type { ChatMessage } from "../providers/types";
 import { getAgentStateCache, setAgentStateCache, getChatCache, setChatCache } from "./redis";
 import { prisma } from "@repo/db";
 import { formatProjectStateManifest, type CompactedStatePayload } from "./compaction";
+import { authenticateUser } from "../middlewares/auth.middleware";
 
-export const AsyncHandler = (fn: any) => async (req: Request, res: Response, next: NextFunction) => {
+export const AsyncHandler = (fn: any) => async (req: Request, ...args: any[]) => {
     try {
-        await fn(req, res, next);
-    } catch (error) {
+        return await fn(req, ...args);
+    } catch (error: any) {
         console.error("Error in AsyncHandler:", error);
-        if (res.headersSent) {
-            if (!res.writableEnded) {
-                res.write(`event: error\ndata: ${JSON.stringify({ message: error instanceof Error ? error.message : String(error) })}\n\n`);
-                res.end();
-            }
-            return;
-        }
-        return res.status(500).json({ success: false, error: error instanceof Error ? error.message : error });
+        return Response.json(
+            { success: false, error: error instanceof Error ? error.message : String(error) },
+            { status: 500 }
+        );
     }
 };
 
-export const getUserId = (req: Request) => {
-    return req.userId;
+export const getUserId = (req: Request): string | null => {
+    return (req as any).userId || authenticateUser(req);
 };
 
 // Get compacted agent state from Redis or DB
