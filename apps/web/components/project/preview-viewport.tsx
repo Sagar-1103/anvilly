@@ -50,6 +50,7 @@ export default function PreviewViewport({
             <div className="relative w-full h-full rounded-[38px] overflow-hidden bg-black flex flex-col border border-zinc-800/80">
               {isExpo ? (
                 <ExpoPreviewCard
+                  projectId={project?.id}
                   expoUrl={project?.expoUrl}
                   tunnelUrl={project?.tunnelUrl}
                   projectTitle={project?.title}

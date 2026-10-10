@@ -8,21 +8,26 @@ import {
   Check,
   Wifi,
   Sparkles,
+  Rocket,
 } from "lucide-react";
 import { toast } from "sonner";
+import ExpoDeployModal from "../ExpoDeployModal";
 
 interface ExpoPreviewCardProps {
+  projectId?: string;
   expoUrl?: string;
   tunnelUrl?: string;
   projectTitle?: string;
 }
 
 export default function ExpoPreviewCard({
+  projectId,
   expoUrl,
   tunnelUrl,
   projectTitle,
 }: ExpoPreviewCardProps) {
   const [copied, setCopied] = useState(false);
+  const [isDeployOpen, setIsDeployOpen] = useState(false);
   const targetUrl = expoUrl || tunnelUrl || "";
 
   const handleCopyLink = async () => {
@@ -109,6 +114,16 @@ export default function ExpoPreviewCard({
 
         {/* Action Controls */}
         <div className="w-full flex flex-col items-center gap-2">
+          {projectId && (
+            <button
+              onClick={() => setIsDeployOpen(true)}
+              className="w-full max-w-[230px] flex items-center justify-center gap-2 py-2 px-4 bg-indigo-600/90 hover:bg-indigo-600 active:scale-[0.98] transition-all rounded-xl text-xs font-medium text-white border border-indigo-500/40 cursor-pointer shadow-md shadow-indigo-600/20"
+            >
+              <Rocket className="w-3.5 h-3.5" />
+              <span>Deploy (APK / AAB)</span>
+            </button>
+          )}
+
           <button
             onClick={handleCopyLink}
             disabled={!targetUrl}
@@ -126,7 +141,6 @@ export default function ExpoPreviewCard({
               </>
             )}
           </button>
-
         </div>
       </div>
 
@@ -139,6 +153,16 @@ export default function ExpoPreviewCard({
         {/* iOS Home Indicator */}
         <div className="w-32 h-1 bg-zinc-600/70 rounded-full" />
       </div>
+
+      {/* Deploy Modal */}
+      {projectId && (
+        <ExpoDeployModal
+          isOpen={isDeployOpen}
+          onClose={() => setIsDeployOpen(false)}
+          projectId={projectId}
+          projectTitle={projectTitle}
+        />
+      )}
     </div>
   );
 }

@@ -10,6 +10,11 @@ import {
   updateProjectMetadata,
 } from "../controllers/project.controller";
 import { getFileTree, readFileContent } from "../controllers/file.controller";
+import {
+  triggerProjectBuild,
+  getProjectBuilds,
+  cancelProjectBuild,
+} from "../controllers/build.controller";
 import { requireAuth } from "../middlewares/auth.middleware";
 
 const projectRouter = new Router();
@@ -24,5 +29,9 @@ projectRouter.post("/:projectId", requireAuth(updateProject));
 projectRouter.patch("/:projectId", requireAuth(updateProjectMetadata));
 projectRouter.delete("/:projectId", requireAuth(deleteProject));
 projectRouter.get("/ping/:projectId", requireAuth(pingProject));
+
+projectRouter.post("/:projectId/build", requireAuth(triggerProjectBuild));
+projectRouter.get("/:projectId/builds", requireAuth(getProjectBuilds));
+projectRouter.post("/:projectId/builds/:buildId/cancel", requireAuth(cancelProjectBuild));
 
 export default projectRouter;

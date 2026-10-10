@@ -38,50 +38,51 @@ export default function DeviceToolbar({
 
   return (
     <div className="flex items-center gap-2">
-      {isExpo && (
-        <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#391e66] border border-[#6366f1]/40 text-purple-200 flex items-center gap-1 shadow-xs">
-          <Smartphone className="w-2.5 h-2.5" /> Expo Go
+      {isExpo ? (
+        <span className="text-[10px] font-mono px-2.5 py-1 rounded-full bg-[#391e66] border border-[#6366f1]/40 text-purple-200 flex items-center gap-1.5 shadow-xs select-none">
+          <Smartphone className="w-3 h-3 text-purple-300" /> Expo Go
         </span>
+      ) : (
+        <div className="flex items-center gap-1">
+          {/* Device cycle toggle button */}
+          <button
+            type="button"
+            onClick={cycleDevice}
+            className={`p-1.5 cursor-pointer rounded-lg transition-colors ${
+              device === "desktop"
+                ? "text-zinc-400 hover:text-white hover:bg-white/[0.06]"
+                : "text-white bg-[#34343a] border border-white/10 shadow-xs"
+            }`}
+            title={`Device mode: ${device} (click to switch)`}
+          >
+            {device === "desktop" && <Monitor className="w-3.5 h-3.5" strokeWidth={1.8} />}
+            {device === "tablet" && <Tablet className="w-3.5 h-3.5" strokeWidth={1.8} />}
+            {device === "mobile" && <Smartphone className="w-3.5 h-3.5" strokeWidth={1.8} />}
+          </button>
+
+          {/* Refresh preview */}
+          <button
+            type="button"
+            onClick={reloadProjectLink}
+            className="p-1.5 cursor-pointer rounded-lg text-zinc-400 hover:text-white hover:bg-white/[0.06] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            title={!isPreviewReady ? "Preview is generating..." : "Refresh preview"}
+            disabled={!isPreviewReady}
+          >
+            <RotateCw className="w-3.5 h-3.5" strokeWidth={2} />
+          </button>
+
+          {/* External link */}
+          <button
+            type="button"
+            onClick={openProjectUrl}
+            className="p-1.5 cursor-pointer rounded-lg text-zinc-400 hover:text-white hover:bg-white/[0.06] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            title={!isPreviewReady ? "Preview is generating..." : "Open in new tab"}
+            disabled={!projectUrl || !isPreviewReady}
+          >
+            <ExternalLink className="w-3.5 h-3.5" strokeWidth={2} />
+          </button>
+        </div>
       )}
-      <div className="flex items-center gap-1">
-        {/* Device cycle toggle button */}
-        <button
-          type="button"
-          onClick={cycleDevice}
-          className={`p-1.5 cursor-pointer rounded-lg transition-colors ${
-            device === "desktop"
-              ? "text-zinc-400 hover:text-white hover:bg-white/[0.06]"
-              : "text-white bg-[#34343a] border border-white/10 shadow-xs"
-          }`}
-          title={`Device mode: ${device} (click to switch)`}
-        >
-          {device === "desktop" && <Monitor className="w-3.5 h-3.5" strokeWidth={1.8} />}
-          {device === "tablet" && <Tablet className="w-3.5 h-3.5" strokeWidth={1.8} />}
-          {device === "mobile" && <Smartphone className="w-3.5 h-3.5" strokeWidth={1.8} />}
-        </button>
-
-        {/* Refresh */}
-        <button
-          type="button"
-          onClick={reloadProjectLink}
-          className="p-1.5 cursor-pointer rounded-lg text-zinc-400 hover:text-white hover:bg-white/[0.06] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-          title={!isPreviewReady ? "Preview is generating..." : "Refresh preview"}
-          disabled={!isPreviewReady}
-        >
-          <RotateCw className="w-3.5 h-3.5" strokeWidth={2} />
-        </button>
-
-        {/* External link */}
-        <button
-          type="button"
-          onClick={openProjectUrl}
-          className="p-1.5 cursor-pointer rounded-lg text-zinc-400 hover:text-white hover:bg-white/[0.06] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-          title={!isPreviewReady ? "Preview is generating..." : "Open in new tab"}
-          disabled={!projectUrl || !isPreviewReady}
-        >
-          <ExternalLink className="w-3.5 h-3.5" strokeWidth={2} />
-        </button>
-      </div>
     </div>
   );
 }

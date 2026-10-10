@@ -16,22 +16,24 @@ model User {
   updatedAt DateTime    @updatedAt
   projects  Project[]
   apiKeys   UserApiKey[]
+  expoToken ExpoToken?
 }
 
 model Project {
-  id           String    @id @default(uuid())
+  id           String         @id @default(uuid())
   title        String?
   description  String?
   prompt       String
   sandboxId    String
-  template     Template  @default(bun_react_shadcn)
+  template     Template       @default(bun_react_shadcn)
   tunnelUrl    String?
   previewImage String?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
   userId       String
-  user         User      @relation(fields: [userId], references: [id])
+  user         User           @relation(fields: [userId], references: [id])
   history      History[]
+  builds       ProjectBuild[]
 }
 
 enum Template {
@@ -47,6 +49,30 @@ enum HistoryType {
 enum Role {
   USER
   AI
+}
+
+enum BuildPlatform {
+  ANDROID
+  IOS
+}
+
+enum BuildType {
+  APK
+  AAB
+}
+
+enum BuildProfile {
+  PREVIEW
+  PRODUCTION
+  DEVELOPMENT
+}
+
+enum BuildStatus {
+  QUEUED
+  IN_PROGRESS
+  FINISHED
+  ERRORED
+  CANCELED
 }
 
 model History {
@@ -82,4 +108,46 @@ model UserApiKey {
 
   @@unique([userId, provider])
   @@index([userId])
+}
+
+model ExpoToken {
+  id           String    @id @default(uuid())
+  userId       String    @unique
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  username     String?
+  tokenPreview String
+
+  ciphertext   String
+  iv           String
+  authTag      String
+  keyVersion   Int       @default(1)
+
+  isActive     Boolean   @default(true)
+  lastUsedAt   DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([userId])
+}
+
+model ProjectBuild {
+  id           String        @id @default(uuid())
+  projectId    String
+  project      Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  platform     BuildPlatform @default(ANDROID)
+  buildType    BuildType
+  profile      BuildProfile  @default(PREVIEW)
+  status       BuildStatus   @default(QUEUED)
+
+  expoBuildId  String?
+  expoBuildUrl String?
+  artifactUrl  String?
+  errorDetails String?
+
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@index([projectId])
 }

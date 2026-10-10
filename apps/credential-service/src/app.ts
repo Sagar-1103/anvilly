@@ -6,6 +6,12 @@ import {
   handleDeleteCredential,
 } from "./routes/credentials";
 import { handleResolveCredential } from "./routes/resolve";
+import {
+  handleGetExpoToken,
+  handlePostExpoToken,
+  handleDeleteExpoToken,
+  handleResolveExpoToken,
+} from "./routes/expo-token";
 import { authenticateUser, verifyInternalSecret } from "./middleware/auth";
 
 const app = new Router();
@@ -55,7 +61,41 @@ app.delete("/api/v1/credentials/:id", async (req: Request, params?: any) => {
   return handleDeleteCredential(userId, credentialId);
 });
 
-// Internal resolution route
+// Expo Token routes
+app.get("/api/v1/expo-token", async (req: Request) => {
+  const userId = authenticateUser(req);
+  if (!userId) {
+    return Response.json(
+      { success: false, message: "Unauthorized: Invalid or missing token" },
+      { status: 401 }
+    );
+  }
+  return handleGetExpoToken(userId);
+});
+
+app.post("/api/v1/expo-token", async (req: Request) => {
+  const userId = authenticateUser(req);
+  if (!userId) {
+    return Response.json(
+      { success: false, message: "Unauthorized: Invalid or missing token" },
+      { status: 401 }
+    );
+  }
+  return handlePostExpoToken(req, userId);
+});
+
+app.delete("/api/v1/expo-token", async (req: Request) => {
+  const userId = authenticateUser(req);
+  if (!userId) {
+    return Response.json(
+      { success: false, message: "Unauthorized: Invalid or missing token" },
+      { status: 401 }
+    );
+  }
+  return handleDeleteExpoToken(userId);
+});
+
+// Internal resolution routes
 app.post("/api/v1/credentials/resolve", async (req: Request) => {
   if (!verifyInternalSecret(req)) {
     return Response.json(
@@ -64,6 +104,16 @@ app.post("/api/v1/credentials/resolve", async (req: Request) => {
     );
   }
   return handleResolveCredential(req);
+});
+
+app.post("/api/v1/expo-token/resolve", async (req: Request) => {
+  if (!verifyInternalSecret(req)) {
+    return Response.json(
+      { success: false, message: "Forbidden: Invalid internal secret" },
+      { status: 403 }
+    );
+  }
+  return handleResolveExpoToken(req);
 });
 
 export default app;
