@@ -23,9 +23,11 @@
     "packages/*"
   ],
   "overrides": {
-    "chalk": "^4.1.2"
+    "chalk": "^4.1.2",
+    "@types/react": "19.3.3"
   },
   "resolutions": {
-    "chalk": "^4.1.2"
+    "chalk": "^4.1.2",
+    "@types/react": "19.3.3"
   }
 }
