@@ -49,26 +49,28 @@ export function Button({
   const isGhost = variant === 'ghost';
   const isDanger = variant === 'danger';
 
+  const isDisabled = disabled || loading;
+
   return (
     <Pressable
       onPress={handlePress}
-      disabled={disabled || loading}
+      disabled={isDisabled}
       style={({ pressed }) => [
         styles.base,
         styles[size],
-        isPrimary && styles.primary,
+        isPrimary && (isDisabled ? styles.primaryDisabled : styles.primary),
         isSecondary && styles.secondary,
         isGhost && styles.ghost,
         isDanger && styles.danger,
-        pressed && styles.pressed,
-        (disabled || loading) && styles.disabled,
+        pressed && !isDisabled && styles.pressed,
+        !isPrimary && isDisabled && styles.disabled,
         style,
       ]}
     >
       {loading ? (
         <ActivityIndicator
           size="small"
-          color={isPrimary ? Colors.light.primaryText : Colors.light.text}
+          color={isPrimary ? Colors.dark.primaryText : Colors.dark.text}
         />
       ) : (
         <>
@@ -76,7 +78,7 @@ export function Button({
           <Text
             style={[
               styles.textBase,
-              isPrimary && styles.textPrimary,
+              isPrimary && (isDisabled ? styles.textPrimaryDisabled : styles.textPrimary),
               isSecondary && styles.textSecondary,
               isGhost && styles.textGhost,
               isDanger && styles.textDanger,
@@ -118,20 +120,25 @@ const styles = StyleSheet.create({
     minHeight: 52,
   },
   primary: {
-    backgroundColor: Colors.light.primary,
+    backgroundColor: Colors.dark.primary,
+  },
+  primaryDisabled: {
+    backgroundColor: '#202026',
+    borderWidth: 1,
+    borderColor: '#2A2A32',
   },
   secondary: {
-    backgroundColor: Colors.light.background,
+    backgroundColor: Colors.dark.secondaryButton,
     borderWidth: 1,
-    borderColor: Colors.light.border,
+    borderColor: Colors.dark.border,
   },
   ghost: {
     backgroundColor: 'transparent',
   },
   danger: {
-    backgroundColor: Colors.light.dangerBg,
+    backgroundColor: Colors.dark.dangerBg,
     borderWidth: 1,
-    borderColor: Colors.light.dangerBorder,
+    borderColor: Colors.dark.dangerBorder,
   },
   pressed: {
     opacity: 0.85,
@@ -143,19 +150,22 @@ const styles = StyleSheet.create({
   textBase: {
     ...Typography.subtitle,
     fontSize: 15,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   textPrimary: {
-    color: Colors.light.primaryText,
+    color: Colors.dark.primaryText,
+  },
+  textPrimaryDisabled: {
+    color: Colors.dark.textMuted,
   },
   textSecondary: {
-    color: Colors.light.text,
+    color: Colors.dark.text,
   },
   textGhost: {
-    color: Colors.light.textSecondary,
+    color: Colors.dark.textSecondary,
   },
   textDanger: {
-    color: Colors.light.danger,
+    color: Colors.dark.danger,
   },
   textSm: {
     fontSize: 13,

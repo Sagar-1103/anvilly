@@ -10,15 +10,15 @@ export default function TabLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: Colors.light.background,
-          borderTopColor: Colors.light.border,
+          backgroundColor: Colors.dark.background,
+          borderTopColor: Colors.dark.border,
           borderTopWidth: 1,
           height: Platform.OS === 'ios' ? 84 : 64,
           paddingBottom: Platform.OS === 'ios' ? 24 : 10,
           paddingTop: 8,
         },
-        tabBarActiveTintColor: Colors.light.primary,
-        tabBarInactiveTintColor: Colors.light.textMuted,
+        tabBarActiveTintColor: Colors.dark.primary,
+        tabBarInactiveTintColor: Colors.dark.textMuted,
         tabBarLabelStyle: {
           fontSize: 11,
           fontWeight: '500',
@@ -37,7 +37,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="create"
         options={{
-          title: 'Create',
+          title: 'Prompt',
           tabBarIcon: ({ color, size }) => (
             <PlusSquare size={size - 2} color={color} strokeWidth={1.75} />
           ),

@@ -30,10 +30,10 @@ export default function RootLayout() {
       if (isAuthenticated) {
         router.replace('/(tabs)' as any);
       } else {
-        router.replace('/(auth)/login' as any);
+        router.replace('/(auth)' as any);
       }
     } else if (hasCompletedOnboarding && !isAuthenticated && !inAuthGroup) {
-      router.replace('/(auth)/login' as any);
+      router.replace('/(auth)' as any);
     } else if (hasCompletedOnboarding && isAuthenticated && inAuthGroup) {
       router.replace('/(tabs)' as any);
     }
@@ -66,6 +66,7 @@ export default function RootLayout() {
         <Stack.Screen name="(onboarding)" options={{ headerShown: false }} />
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="project/[id]" options={{ headerShown: false }} />
       </Stack>
     </SafeAreaProvider>
   );

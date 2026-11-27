@@ -2,7 +2,6 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { router } from 'expo-router';
 import { useAuthStore } from '../../stores/auth-store';
 import { Button } from '../../components/ui/button';
 import { Colors, Spacing, Typography, Radius } from '../../constants/theme';
@@ -12,12 +11,11 @@ export default function SettingsScreen() {
 
   const handleLogout = async () => {
     await logout();
-    router.replace('/(auth)/login' as any);
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar style="dark" />
+      <StatusBar style="light" />
       <View style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.title}>Settings.</Text>

@@ -34,10 +34,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   hydrate: async () => {
     try {
-      const [token, user, hasCompletedOnboarding] = await Promise.all([
+      const [token, user] = await Promise.all([
         secureStore.getToken(),
         secureStore.getUser<User>(),
-        secureStore.hasCompletedOnboarding(),
       ]);
 
       if (token && user) {
@@ -45,7 +44,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           token,
           user,
           isAuthenticated: true,
-          hasCompletedOnboarding,
+          hasCompletedOnboarding: true,
           isLoading: false,
           error: null,
         });
@@ -54,7 +53,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           token: null,
           user: null,
           isAuthenticated: false,
-          hasCompletedOnboarding,
+          hasCompletedOnboarding: false,
           isLoading: false,
         });
       }
@@ -70,7 +69,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   completeOnboarding: async () => {
-    await secureStore.setCompletedOnboarding(true);
     set({ hasCompletedOnboarding: true });
   },
 
@@ -136,6 +134,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       token: null,
       user: null,
       isAuthenticated: false,
+      hasCompletedOnboarding: false,
       error: null,
     });
   },

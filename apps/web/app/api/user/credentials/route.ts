@@ -1,12 +1,33 @@
 import { authOptions } from "@/lib/auth";
+import jwt from "jsonwebtoken";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 
 const CREDENTIAL_SERVICE_URL = process.env.CREDENTIAL_SERVICE_URL || "http://127.0.0.1:3002";
 
-export async function GET() {
+async function resolveAuthToken(req: NextRequest): Promise<string | null> {
   const session = await getServerSession(authOptions);
-  if (!session?.jwtToken) {
+  if (session?.jwtToken) return session.jwtToken;
+
+  const authHeader = req.headers.get("authorization");
+  if (authHeader?.toLowerCase().startsWith("bearer ")) {
+    const token = authHeader.slice(7).trim();
+    const secret = process.env.JWT_SECRET;
+    if (token && secret) {
+      try {
+        jwt.verify(token, secret);
+        return token;
+      } catch {
+        return null;
+      }
+    }
+  }
+  return null;
+}
+
+export async function GET(req: NextRequest) {
+  const jwtToken = await resolveAuthToken(req);
+  if (!jwtToken) {
     return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
   }
 
@@ -14,7 +35,7 @@ export async function GET() {
     const res = await fetch(`${CREDENTIAL_SERVICE_URL}/api/v1/credentials`, {
       method: "GET",
       headers: {
-        Authorization: `Bearer ${session.jwtToken}`,
+        Authorization: `Bearer ${jwtToken}`,
       },
     });
 
@@ -30,8 +51,8 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if (!session?.jwtToken) {
+  const jwtToken = await resolveAuthToken(req);
+  if (!jwtToken) {
     return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
   }
 
@@ -41,7 +62,7 @@ export async function POST(req: NextRequest) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${session.jwtToken}`,
+        Authorization: `Bearer ${jwtToken}`,
       },
       body: JSON.stringify(body),
     });
@@ -58,8 +79,8 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if (!session?.jwtToken) {
+  const jwtToken = await resolveAuthToken(req);
+  if (!jwtToken) {
     return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
   }
 
@@ -73,7 +94,7 @@ export async function DELETE(req: NextRequest) {
     const res = await fetch(`${CREDENTIAL_SERVICE_URL}/api/v1/credentials/${id}`, {
       method: "DELETE",
       headers: {
-        Authorization: `Bearer ${session.jwtToken}`,
+        Authorization: `Bearer ${jwtToken}`,
       },
     });
 
